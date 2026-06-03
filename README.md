@@ -29,7 +29,7 @@ Download `jump_height_calculator.html` and open it in any modern browser (Chrome
 ### Option B — GitHub Pages
 Visit the live version at:
 ```
-https://jclaude0987.github.io/jump-height-calculator/jump_height_calculator.html
+https://jclaude0987.github.io/jump_height_calculator/jump_height_calculator.html
 ```
 
 ## Tips for accurate results
