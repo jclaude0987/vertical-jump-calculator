@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jump Height Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f5f5f3;
+      --bg-tertiary: #eeede9;
+      --text-primary: #1a1a18;
+      --text-secondary: #6b6b67;
+      --text-tertiary: #a0a09b;
+      --border-light: rgba(0,0,0,0.1);
+      --border-mid: rgba(0,0,0,0.18);
+      --border-strong: rgba(0,0,0,0.28);
+      --radius-md: 8px;
+      --radius-lg: 12px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #1e1e1c;
+        --bg-secondary: #2a2a28;
+        --bg-tertiary: #323230;
+        --text-primary: #f0efeb;
+        --text-secondary: #9a9a94;
+        --text-tertiary: #6a6a64;
+        --border-light: rgba(255,255,255,0.08);
+        --border-mid: rgba(255,255,255,0.14);
+        --border-strong: rgba(255,255,255,0.22);
+      }
+    }
+
+    body {
+      font-family: 'Barlow', sans-serif;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 640px;
+    }
+
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.5rem;
+      border-bottom: 0.5px solid var(--border-light);
+      padding-bottom: 1rem;
+    }
+    .header-left { display: flex; align-items: baseline; gap: 12px; }
+    .header h1 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 26px; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      color: var(--text-primary);
+    }
+    .header-sub {
+      font-size: 13px; color: var(--text-secondary);
+      font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
+    }
+
+    .new-video-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 7px 14px; font-size: 13px; font-weight: 500;
+      font-family: 'Barlow', sans-serif;
+      border: 0.5px solid var(--border-mid);
+      border-radius: var(--radius-md);
+      background: var(--bg-secondary);
+      color: var(--text-secondary); cursor: pointer; transition: all 0.12s;
+    }
+    .new-video-btn:hover { background: var(--bg-primary); color: var(--text-primary); border-color: var(--border-strong); }
+    .new-video-btn i { font-size: 16px; }
+
+    .upload-zone {
+      border: 1px dashed var(--border-mid);
+      border-radius: var(--radius-lg);
+      padding: 3rem 2rem; text-align: center; cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      background: var(--bg-secondary); margin-bottom: 1.5rem;
+    }
+    .upload-zone:hover { border-color: var(--border-strong); background: var(--bg-primary); }
+    .upload-zone i { font-size: 36px; color: var(--text-tertiary); display: block; margin-bottom: 10px; }
+    .upload-zone p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+    .upload-zone strong { color: var(--text-primary); }
+
+    .section {
+      background: var(--bg-primary);
+      border: 0.5px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .section-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+
+    video { width: 100%; border-radius: var(--radius-md); display: block; margin-bottom: 10px; background: #000; max-height: 360px; object-fit: contain; }
+
+    .fps-row { display: flex; gap: 8px; margin-bottom: 1rem; }
+    .fps-btn {
+      flex: 1; padding: 8px 0; font-size: 13px; font-weight: 600;
+      font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.05em;
+      background: var(--bg-secondary); border: 0.5px solid var(--border-mid);
+      border-radius: var(--radius-md); cursor: pointer; color: var(--text-secondary); transition: all 0.12s;
+    }
+    .fps-btn:hover { background: var(--bg-primary); color: var(--text-primary); }
+    .fps-btn.active { background: var(--text-primary); color: var(--bg-primary); border-color: var(--text-primary); }
+
+    input[type=range] {
+      width: 100%; height: 4px; cursor: pointer;
+      accent-color: var(--text-primary);
+      margin-bottom: 0;
+    }
+
+    .frame-markers { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
+
+    .playback-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .play-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      border: 0.5px solid var(--border-mid); cursor: pointer;
+      background: var(--bg-secondary); transition: all 0.12s; flex-shrink: 0;
+    }
+    .play-btn:hover { background: var(--bg-primary); }
+    .play-btn i { font-size: 16px; color: var(--text-primary); }
+    .frame-counter {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: var(--text-secondary);
+    }
+    .step-btn {
+      width: 30px; height: 30px; border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      border: 0.5px solid var(--border-light); cursor: pointer;
+      background: transparent; transition: all 0.12s; flex-shrink: 0;
+    }
+    .step-btn:hover { border-color: var(--border-mid); background: var(--bg-secondary); }
+    .step-btn i { font-size: 14px; color: var(--text-primary); }
+
+    .mark-controls { display: flex; gap: 8px; margin-bottom: 10px; margin-top: 12px; }
+    .mark-btn {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 9px 12px; font-size: 13px; font-weight: 500;
+      border: 0.5px solid var(--border-mid); border-radius: var(--radius-md);
+      cursor: pointer; background: var(--bg-secondary); color: var(--text-secondary); transition: all 0.12s;
+    }
+    .mark-btn:hover { background: var(--bg-primary); color: var(--text-primary); }
+    .mark-btn.set { border-color: var(--border-strong); color: var(--text-primary); background: var(--bg-primary); }
+    .mark-btn i { font-size: 16px; }
+
+    .markers-display { display: flex; gap: 8px; }
+    .marker-chip {
+      flex: 1; padding: 6px 10px;
+      border-radius: var(--radius-md);
+      border: 0.5px solid var(--border-light);
+      background: var(--bg-secondary);
+    }
+    .chip-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); font-weight: 600; }
+    .chip-val { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; color: var(--text-primary); }
+    .chip-val.unset { color: var(--text-tertiary); font-weight: 400; }
+
+    .calc-btn {
+      width: 100%; padding: 13px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 15px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      background: var(--text-primary); color: var(--bg-primary);
+      border: none; border-radius: var(--radius-md); cursor: pointer; transition: opacity 0.12s;
+    }
+    .calc-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .calc-btn:hover:not(:disabled) { opacity: 0.82; }
+
+    .results-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+    .result-card { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 12px 14px; }
+    .r-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-secondary); font-weight: 600; margin-bottom: 4px; }
+    .r-val { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 700; line-height: 1; color: var(--text-primary); }
+    .r-unit { font-size: 13px; color: var(--text-secondary); font-weight: 400; }
+    .result-card.highlight { background: var(--text-primary); }
+    .result-card.highlight .r-label { color: rgba(255,255,255,0.55); }
+    .result-card.highlight .r-val { color: #fff; }
+    .result-card.highlight .r-unit { color: rgba(255,255,255,0.65); }
+
+    .formula-row {
+      font-size: 12px; color: var(--text-tertiary);
+      font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.03em;
+      margin-top: 10px; text-align: center;
+    }
+
+    .video-filename { font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <div class="header-left">
+        <h1>Jump Height</h1>
+        <span class="header-sub">Flight Time Calculator</span>
+      </div>
+      <button class="new-video-btn hidden" id="newVideoBtn">
+        <i class="ti ti-refresh"></i> New Video
+      </button>
+    </div>
+
+    <div class="upload-zone" id="uploadZone">
+      <i class="ti ti-video"></i>
+      <p><strong>Drop video here</strong> or click to browse</p>
+      <p style="margin-top:6px; font-size:12px;">MP4 · MOV · WebM &nbsp;·&nbsp; 30 / 60 / 90 / 120 / 240 fps</p>
+      <input type="file" id="fileInput" accept="video/*" style="display:none">
+    </div>
+
+    <div id="mainUI" class="hidden">
+
+      <div class="section">
+        <div class="section-label">Frame Rate</div>
+        <div class="fps-row">
+          <button class="fps-btn" data-fps="30">30 fps</button>
+          <button class="fps-btn" data-fps="60">60 fps</button>
+          <button class="fps-btn" data-fps="90">90 fps</button>
+          <button class="fps-btn active" data-fps="120">120 fps</button>
+          <button class="fps-btn" data-fps="240">240 fps</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Video &amp; Frame Selection</div>
+        <div class="video-filename" id="videoFilename"></div>
+        <video id="videoEl" muted playsinline></video>
+
+        <div class="playback-row">
+          <button class="play-btn" id="playBtn" title="Play / Pause">
+            <i class="ti ti-player-play" id="playIcon"></i>
+          </button>
+          <button class="step-btn" id="prevFrame" title="Previous frame"><i class="ti ti-chevron-left"></i></button>
+          <button class="step-btn" id="nextFrame" title="Next frame"><i class="ti ti-chevron-right"></i></button>
+          <span class="frame-counter" id="frameCounter">Frame 0 / 0</span>
+        </div>
+
+        <div style="margin-bottom:4px;">
+          <input type="range" id="frameSlider" min="0" max="1000" value="0" step="1">
+        </div>
+        <div class="frame-markers"><span>0</span><span id="frameLabelEnd">—</span></div>
+
+        <div class="mark-controls">
+          <button class="mark-btn" id="markTakeoff"><i class="ti ti-arrow-up"></i> Mark Takeoff</button>
+          <button class="mark-btn" id="markLanding"><i class="ti ti-arrow-down"></i> Mark Landing</button>
+        </div>
+
+        <div class="markers-display">
+          <div class="marker-chip"><div class="chip-label">Takeoff</div><div class="chip-val unset" id="takeoffVal">—</div></div>
+          <div class="marker-chip"><div class="chip-label">Landing</div><div class="chip-val unset" id="landingVal">—</div></div>
+          <div class="marker-chip"><div class="chip-label">Frames in air</div><div class="chip-val unset" id="framesInAir">—</div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Results</div>
+        <button class="calc-btn" id="calcBtn" disabled>Calculate Jump Height</button>
+        <div id="resultsArea" class="hidden">
+          <div class="results-grid">
+            <div class="result-card"><div class="r-label">Flight time</div><div class="r-val" id="resTime">—</div><div class="r-unit">seconds</div></div>
+            <div class="result-card highlight"><div class="r-label">Height</div><div class="r-val" id="resCm">—</div><div class="r-unit">centimeters</div></div>
+            <div class="result-card"><div class="r-label">Height</div><div class="r-val" id="resIn">—</div><div class="r-unit">inches</div></div>
+          </div>
+          <div class="formula-row" id="formulaRow"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const mainUI = document.getElementById('mainUI');
+    const newVideoBtn = document.getElementById('newVideoBtn');
+    const videoEl = document.getElementById('videoEl');
+    const playBtn = document.getElementById('playBtn');
+    const playIcon = document.getElementById('playIcon');
+    const frameSlider = document.getElementById('frameSlider');
+    const frameCounter = document.getElementById('frameCounter');
+    const frameLabelEnd = document.getElementById('frameLabelEnd');
+    const markTakeoffBtn = document.getElementById('markTakeoff');
+    const markLandingBtn = document.getElementById('markLanding');
+    const takeoffVal = document.getElementById('takeoffVal');
+    const landingVal = document.getElementById('landingVal');
+    const framesInAir = document.getElementById('framesInAir');
+    const calcBtn = document.getElementById('calcBtn');
+    const resultsArea = document.getElementById('resultsArea');
+    const videoFilename = document.getElementById('videoFilename');
+
+    let fps = 120;
+    let totalFrames = 0;
+    let takeoffFrame = null;
+    let landingFrame = null;
+    let isPlaying = false;
+    let rafId = null;
+    let sliderDragging = false;
+    let objectURL = null;
+
+    uploadZone.addEventListener('click', () => fileInput.click());
+    uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.style.borderColor = '#888'; });
+    uploadZone.addEventListener('dragleave', () => { uploadZone.style.borderColor = ''; });
+    uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.style.borderColor = ''; if (e.dataTransfer.files[0]) loadVideo(e.dataTransfer.files[0]); });
+    fileInput.addEventListener('change', e => { if (e.target.files[0]) loadVideo(e.target.files[0]); });
+
+    newVideoBtn.addEventListener('click', () => {
+      if (isPlaying) stopPlayback();
+      if (objectURL) { URL.revokeObjectURL(objectURL); objectURL = null; }
+      videoEl.src = '';
+      fileInput.value = '';
+      mainUI.classList.add('hidden');
+      uploadZone.classList.remove('hidden');
+      newVideoBtn.classList.add('hidden');
+      videoFilename.textContent = '';
+      resetMarkers();
+    });
+
+    function loadVideo(file) {
+      if (objectURL) URL.revokeObjectURL(objectURL);
+      objectURL = URL.createObjectURL(file);
+      videoEl.src = objectURL;
+      videoEl.load();
+      videoFilename.textContent = file.name;
+      videoEl.addEventListener('loadedmetadata', () => {
+        totalFrames = Math.floor(videoEl.duration * fps);
+        frameSlider.max = totalFrames - 1;
+        frameSlider.value = 0;
+        frameLabelEnd.textContent = totalFrames - 1;
+        updateCounter();
+        mainUI.classList.remove('hidden');
+        uploadZone.classList.add('hidden');
+        newVideoBtn.classList.remove('hidden');
+        resetMarkers();
+      }, { once: true });
+    }
+
+    document.querySelectorAll('.fps-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.fps-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        fps = parseInt(btn.dataset.fps);
+        if (videoEl.src) {
+          totalFrames = Math.floor(videoEl.duration * fps);
+          frameSlider.max = totalFrames - 1;
+          frameLabelEnd.textContent = totalFrames - 1;
+          const cur = Math.min(parseInt(frameSlider.value), totalFrames - 1);
+          frameSlider.value = cur;
+          seekToFrame(cur);
+          resetMarkers();
+        }
+      });
+    });
+
+    function currentFrame() { return Math.round(videoEl.currentTime * fps); }
+
+    function seekToFrame(f) {
+      f = Math.max(0, Math.min(f, totalFrames - 1));
+      videoEl.currentTime = f / fps;
+      frameSlider.value = f;
+      updateCounter();
+    }
+
+    function updateCounter() {
+      frameCounter.textContent = `Frame ${Math.round(videoEl.currentTime * fps)} / ${totalFrames - 1}`;
+    }
+
+    frameSlider.addEventListener('input', () => { sliderDragging = true; seekToFrame(parseInt(frameSlider.value)); });
+    frameSlider.addEventListener('change', () => { sliderDragging = false; });
+
+    playBtn.addEventListener('click', togglePlay);
+
+    function togglePlay() { isPlaying ? stopPlayback() : startPlayback(); }
+
+    function startPlayback() {
+      videoEl.play(); isPlaying = true;
+      playIcon.className = 'ti ti-player-pause';
+      rafId = requestAnimationFrame(rafLoop);
+    }
+
+    function stopPlayback() {
+      videoEl.pause(); isPlaying = false;
+      playIcon.className = 'ti ti-player-play';
+      cancelAnimationFrame(rafId);
+    }
+
+    function rafLoop() {
+      if (!sliderDragging) { frameSlider.value = currentFrame(); updateCounter(); }
+      if (videoEl.ended) { stopPlayback(); return; }
+      rafId = requestAnimationFrame(rafLoop);
+    }
+
+    videoEl.addEventListener('ended', stopPlayback);
+
+    document.getElementById('prevFrame').addEventListener('click', () => { if (isPlaying) stopPlayback(); seekToFrame(currentFrame() - 1); });
+    document.getElementById('nextFrame').addEventListener('click', () => { if (isPlaying) stopPlayback(); seekToFrame(currentFrame() + 1); });
+
+    markTakeoffBtn.addEventListener('click', () => {
+      takeoffFrame = currentFrame();
+      takeoffVal.textContent = takeoffFrame;
+      takeoffVal.classList.remove('unset');
+      markTakeoffBtn.classList.add('set');
+      updateFramesInAir();
+    });
+
+    markLandingBtn.addEventListener('click', () => {
+      landingFrame = currentFrame();
+      landingVal.textContent = landingFrame;
+      landingVal.classList.remove('unset');
+      markLandingBtn.classList.add('set');
+      updateFramesInAir();
+    });
+
+    function updateFramesInAir() {
+      if (takeoffFrame !== null && landingFrame !== null) {
+        const diff = landingFrame - takeoffFrame;
+        if (diff > 0) {
+          framesInAir.textContent = diff;
+          framesInAir.classList.remove('unset');
+          calcBtn.disabled = false;
+          resultsArea.classList.add('hidden');
+        } else {
+          framesInAir.textContent = 'err';
+          framesInAir.classList.add('unset');
+          calcBtn.disabled = true;
+        }
+      }
+    }
+
+    function resetMarkers() {
+      takeoffFrame = null; landingFrame = null;
+      takeoffVal.textContent = '—'; takeoffVal.classList.add('unset');
+      landingVal.textContent = '—'; landingVal.classList.add('unset');
+      framesInAir.textContent = '—'; framesInAir.classList.add('unset');
+      markTakeoffBtn.classList.remove('set');
+      markLandingBtn.classList.remove('set');
+      calcBtn.disabled = true;
+      resultsArea.classList.add('hidden');
+    }
+
+    calcBtn.addEventListener('click', () => {
+      const frames = landingFrame - takeoffFrame;
+      const t = frames / fps;
+      const halfT = t / 2;
+      const d = 0.5 * 9.81 * halfT * halfT;
+      document.getElementById('resTime').textContent = t.toFixed(3);
+      document.getElementById('resCm').textContent = (d * 100).toFixed(1);
+      document.getElementById('resIn').textContent = (d * 39.3701).toFixed(1);
+      document.getElementById('formulaRow').textContent =
+        `d = ½ × 9.81 × (${halfT.toFixed(3)})² = ${d.toFixed(4)} m   ·   ${frames} frames @ ${fps} fps`;
+      resultsArea.classList.remove('hidden');
+    });
+  </script>
+</body>
+</html>
