@@ -20,6 +20,8 @@ The app uses the physics of free-fall to calculate jump height from the time a j
 - Any frame rate, including off-list rates such as 25, 50, 100 or 200 fps
 - A flight-path diagram that scales with the measured height
 - Results in centimeters and inches
+- **Save each jump to a named session** — the save button says which session it will write to
+- **Step through a session's jumps** — the Measure dashboard numbers each jump (`Jump 2 of 3`) with previous and next controls, so you can compare reps without leaving the page
 - **Career dashboard** — every jump is saved to the day's session, and each day's mean is plotted on a line graph so you can see your height variation over weeks and months
 - Sessions are labelled by date and can be renamed, expanded to see every jump, and exported or imported as JSON
 - Load multiple videos without refreshing
@@ -55,6 +57,19 @@ One frame of error matters more than it sounds, because height depends on flight
 | 120 | 1.7% | ~3.3% |
 | 60 | 3.3% | ~6.7% |
 | 30 | 6.7% | ~13% |
+
+## Measuring several jumps
+
+**New Jump** clears the current clip and returns to the upload zone. Everything you already saved stays in the session, so you can measure one jump after another without leaving the page.
+
+When a height appears, the save button says **Save to *session name***. It writes to the session you are currently in, which is today's session by default. Rename it with **Change** next to the session name.
+
+After the first jump is saved, a stepper appears beside New Jump: **‹ Jump 2 of 3 · 130.9 cm ›**. It walks the jumps in this session in the order you measured them, shows each one's height and redraws its flight arc, so you can compare reps directly.
+
+Two limits worth knowing:
+
+- **The video must still be loaded for frames to reappear.** Stepping to a saved jump shows its height, flight time and arc at any time. Its takeoff and landing frames only come back if you are looking at the same clip you measured them from, in the same session. After a reload or a new video, you get the numbers and the arc but not the frames.
+- **Individual jumps are also listed in the Career tab.** Expand a session to see every jump, sorted best first, with a count of frames and frame rate. The file name is a button that opens that jump back up in Measure.
 
 ## Tracking over time
 

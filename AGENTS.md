@@ -85,6 +85,20 @@ Two dashboards in one file, switched by `selectTab` toggling `hidden` on `#panel
 - `escapeHtml` is applied to every user-controlled string interpolated into the list (session names and video file names, both user-supplied). Keep it.
 - Write dates and counts through `plural()` rather than inline ternaries; an inline one produced "1 jumps" once already.
 
+## Per-jump records and the stepper
+
+Every saved jump carries `takeoffTime`, `landingTime` and `duration` next to `fps`, `frames`, `flightTime`, `heightCm`, `heightIn`, `videoName` and `savedAt`. `STORE_VERSION` stays `1` because the shape is a superset: a jump written before this change simply lacks the marker fields, and `loadSessions` drops jumps with a non-finite `heightCm` rather than rejecting the whole session. Everything that reads a jump must tolerate the missing fields.
+
+- **`drawTrajectory(flightSeconds)` takes the flight time as an argument.** The arc depends only on it, so a stored jump redraws its arc with no video and no markers. Called with no argument it falls back to the live markers. Relative jumps still normalise against 1.2 s, because absolute colour and height need a stable reference — see the comment in the function.
+- **`viewed` and `savedJump` are different states and must stay separate.** `savedJump` is a fresh, unsaved result and is what enables the save button; `viewed` is a stored jump on screen and is never savable. Collapsing them re-saves a stored jump as a duplicate.
+- **`viewJump` makes the viewed session the active one before anything else.** The stepper, the session label and the save target all read `activeSession()`, so without this the navigator would walk today's session while the reading showed another one. This was a real bug: the navigator read `—` and both arrows stayed enabled.
+- **`renderJumpNav` and `stepJump` both resolve the session as `sessions.find(x => viewed && x.id === viewed.sessionId) || activeSession()`.** Keep those two expressions in step, or the arrows move in a different session than the one displayed.
+- **`restoringMarkers` guards the replay.** `renderMarkers` clears `savedJump` and `viewed` on any marker change, which is correct for a user edit and wrong for a replay. `viewJump` sets the flag around `renderMarkers()` and clears it after. Never remove that guard without re-testing the stepper.
+- **Marker replay needs three things to match:** `j.fps === fps`, the same `videoFilename`, and a non-null `j.takeoffTime`. Without all three the jump still shows its result and arc but no frames. This is the documented limit — markers cannot survive a reload or a different video.
+- **`formatStamp` prints from a local `Date`,** deliberately, for the same reason `todayKey` does: `toISOString` would show a different day than the one the jump was filed under.
+- **Deleting a viewed jump or its session clears `viewed` and hides the reading.** `viewJump` calls `renderSessionLabel` rather than `renderJumpNav` directly, because the label is what refreshes the navigator — that keeps the two from drifting.
+- Jumps are stored in the order measured, and `jumpsOf` sorts by `savedAt` to keep that order for the stepper. The session list sorts by height instead. The two orders differ on purpose.
+
 ## Values duplicated across files
 
 These drift easily because they exist in more than one place:

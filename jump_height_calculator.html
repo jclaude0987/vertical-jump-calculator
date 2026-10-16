@@ -112,6 +112,31 @@
     .new-video-btn:hover { background: var(--sunken); }
     .new-video-btn i { font-size: 1.125rem; }
 
+    /* New Jump and the jump stepper share one row, under the session bar. */
+    .jump-bar {
+      display: flex; align-items: center; gap: 0.375rem; margin-bottom: 1rem;
+    }
+    .jump-nav {
+      flex: 1; min-width: 0;
+      display: flex; align-items: center; justify-content: space-between; gap: 0.25rem;
+      background: var(--raised); border: 1px solid var(--hairline);
+      border-radius: var(--radius-lg); padding: 0 0.25rem;
+    }
+    .jump-nav-label {
+      flex: 1; min-width: 0; text-align: center;
+      font-family: var(--font-data); font-size: 0.8125rem; font-weight: 600;
+      font-variant-numeric: tabular-nums; color: var(--ink);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .nav-btn {
+      width: var(--tap); min-height: var(--tap); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: none; border: none; border-radius: var(--radius-md);
+      color: var(--ink); cursor: pointer;
+    }
+    .nav-btn:hover:not(:disabled) { background: var(--sunken); }
+    .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
     .upload-zone {
       width: 100%;
       border: 2px dashed var(--line-strong);
@@ -487,6 +512,14 @@
     }
     .jump-row:last-child { border-bottom: none; }
     .jump-row-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); }
+    /* the file name is the control that reopens a saved jump */
+    .jump-open {
+      background: none; border: none; padding: 0; cursor: pointer;
+      font-family: inherit; font-size: inherit; text-align: left;
+      text-decoration: underline; text-decoration-color: var(--hairline);
+      text-underline-offset: 0.15em;
+    }
+    .jump-open:hover { text-decoration-color: var(--ink); }
     .jump-row-val { color: var(--ink); font-weight: 600; }
     .session-empty { padding: 0.5rem 0.625rem; font-size: 0.75rem; color: var(--muted); font-family: var(--font-ui); }
 
@@ -519,9 +552,6 @@
   <div class="app">
     <div class="header">
       <h1>Jump Height</h1>
-      <button class="new-video-btn hidden" id="newVideoBtn">
-        <i class="ti ti-refresh" aria-hidden="true"></i> New Video
-      </button>
     </div>
 
     <div class="tabs" role="tablist" aria-label="Dashboard">
@@ -548,6 +578,21 @@
         <button class="session-edit" id="sessionRename" type="button" aria-label="Rename or change the session date">
           <i class="ti ti-calendar" aria-hidden="true"></i> Change
         </button>
+      </div>
+
+      <div class="jump-bar">
+        <button class="session-edit" id="newJumpBtn" type="button">
+          <i class="ti ti-refresh" aria-hidden="true"></i> New Jump
+        </button>
+        <div class="jump-nav hidden" id="jumpNav" role="group" aria-label="Saved jumps in this session">
+          <button class="nav-btn" id="prevJump" type="button" aria-label="Previous jump">
+            <i class="ti ti-chevron-left" aria-hidden="true"></i>
+          </button>
+          <span class="jump-nav-label" id="jumpNavLabel" role="status" aria-live="polite">—</span>
+          <button class="nav-btn" id="nextJump" type="button" aria-label="Next jump">
+            <i class="ti ti-chevron-right" aria-hidden="true"></i>
+          </button>
+        </div>
       </div>
 
       <div class="section">
@@ -668,7 +713,7 @@
   const uploadZone   = document.getElementById('uploadZone');
   const fileInput    = document.getElementById('fileInput');
   const mainUI       = document.getElementById('mainUI');
-  const newVideoBtn  = document.getElementById('newVideoBtn');
+  const newJumpBtn   = document.getElementById('newJumpBtn');
   const videoEl      = document.getElementById('videoEl');
   const playBtn      = document.getElementById('playBtn');
   const playIcon     = document.getElementById('playIcon');
@@ -829,7 +874,10 @@
   }
 
   function renderMarkers() {
-    savedJump = null;                       // a marker change invalidates the unsaved result
+    // A marker change invalidates both the unsaved result and any stored jump on
+    // screen. restoringMarkers is set while viewJump replays a stored jump's markers,
+    // which is the one case where the viewed jump must survive.
+    if (!restoringMarkers) { savedJump = null; viewed = null; }
     takeoffFrame = takeoffTime == null || fps == null
       ? null : clampFrame(Math.round(takeoffTime * fps));
     landingFrame = landingTime == null || fps == null
@@ -881,7 +929,7 @@
   });
   fileInput.addEventListener('change', e => { if (e.target.files[0]) loadVideo(e.target.files[0]); });
 
-  newVideoBtn.addEventListener('click', () => {
+  newJumpBtn.addEventListener('click', () => {
     if (isPlaying) stopPlayback();
     loadToken++;
     if (objectURL) { URL.revokeObjectURL(objectURL); objectURL = null; }
@@ -890,14 +938,14 @@
     fileInput.value = '';
     mainUI.classList.add('hidden');
     uploadZone.classList.remove('hidden');
-    newVideoBtn.classList.add('hidden');
     videoFilename.textContent = '';
     detectionDone = false;
     fps = null; fpsSource = null; totalFrames = 0;
     fpsNote.className = 'fps-note';
     fpsNote.textContent = 'Detecting frame rate…';
     updateFpsUi();
-    resetMarkers();
+    resetMarkers();          // clears viewed and savedJump too
+    renderJumpNav();
   });
 
   async function loadVideo(file) {
@@ -928,7 +976,6 @@
 
     mainUI.classList.remove('hidden');
     uploadZone.classList.add('hidden');
-    newVideoBtn.classList.remove('hidden');
 
     const resolved = await resolveFrameRate(file, token);
     if (token !== loadToken) return;
@@ -1352,14 +1399,19 @@
     void trajectory.offsetWidth;
     trajectory.classList.add('animate');
 
-    // arm the save: this result is now a candidate for the career record
+    // arm the save: this result is now a candidate for the career record.
+    // takeoffTime and landingTime ride along so a saved jump can put its own markers
+    // back on the timeline later, while its video is still loaded.
     savedJump = {
       videoName: videoFilename.textContent || 'clip',
       fps, frames,
+      takeoffTime, landingTime,
+      duration: videoEl.duration,
       flightTime: t,
       heightCm: cm,
       heightIn: inches
     };
+    viewed = null;                 // a fresh result replaces anything being viewed
     setNote('');
     refreshSaveButton();
   }
@@ -1367,11 +1419,13 @@
   // Draws the flight path itself: a parabola from the marked takeoff frame to the
   // landing frame, with the apex dimensioned. Height scales with the measured value,
   // so the diagram is a readout and not decoration.
-  function drawTrajectory() {
+  function drawTrajectory(flightSeconds) {
     const VW = 320, VH = 136;
     const baseY = 120, topY = 30;
     const x0 = 16, x1 = VW - 16;
-    const flight = (landingFrame - takeoffFrame) / fps;
+    // The arc depends only on flight time, so it can be redrawn for a stored jump with
+    // no video loaded. Fall back to the live markers when called without an argument.
+    const flight = flightSeconds != null ? flightSeconds : (landingFrame - takeoffFrame) / fps;
     // normalise against a 1.2 s flight so a bigger jump visibly draws taller
     const f = Math.max(0.12, Math.min(1, flight / 1.2));
     const apexY = baseY - (baseY - topY) * f;
@@ -1414,6 +1468,8 @@
   let sessions = [];                  // newest first
   let activeSessionId = null;         // the session a new jump is saved into
   let savedJump = null;               // the result currently shown, not yet stored
+  let viewed = null;                  // { sessionId, jumpId } of a stored jump on screen
+  let restoringMarkers = false;       // true while viewJump replays a stored jump's markers
   let chartRange = 'all';
 
   const tabMeasure   = document.getElementById('tabMeasure');
@@ -1430,6 +1486,10 @@
   const careerSummary = document.getElementById('careerSummary');
   const careerLegend = document.getElementById('careerLegend');
   const sessionList  = document.getElementById('sessionList');
+  const jumpNav      = document.getElementById('jumpNav');
+  const jumpNavLabel = document.getElementById('jumpNavLabel');
+  const prevJumpBtn  = document.getElementById('prevJump');
+  const nextJumpBtn  = document.getElementById('nextJump');
 
   function uid() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -1448,11 +1508,24 @@
       if (!raw) return [];
       const parsed = JSON.parse(raw);
       if (!Array.isArray(parsed)) return [];
-      return parsed.filter(s => s && typeof s.date === 'string' && Array.isArray(s.jumps));
+      return parsed
+        .filter(s => s && typeof s.date === 'string' && Array.isArray(s.jumps))
+        .map(s => ({
+          ...s,
+          // jumps saved before markers were recorded have no takeoffTime, so heightCm is
+          // the one field every shape is guaranteed to carry
+          jumps: s.jumps.filter(j => j && isFinite(j.heightCm))
+        }));
     } catch (e) {
       console.debug('[career] could not read stored sessions', e);
       return [];
     }
+  }
+
+  // The session's jumps in the order they were measured, which is the order the
+  // stepper walks. The list sorts by height instead; the two deliberately differ.
+  function jumpsOf(session) {
+    return session ? session.jumps.slice().sort((a, b) => (a.savedAt || 0) - (b.savedAt || 0)) : [];
   }
 
   function persist() {
@@ -1524,30 +1597,121 @@
   function refreshSaveButton() {
     const s = activeSession();
     saveJumpBtn.disabled = !savedJump;
-    saveJumpBtn.innerHTML = s
-      ? `<i class="ti ti-plus" aria-hidden="true"></i> Save to ${s.date}`
-      : '<i class="ti ti-plus" aria-hidden="true"></i> Save to session';
+    const label = s ? `Save to ${escapeHtml(s.name)}` : 'Save to session';
+    saveJumpBtn.innerHTML = `<i class="ti ti-plus" aria-hidden="true"></i> ${label}`;
+    saveJumpBtn.setAttribute('aria-label', s ? `Save this jump to ${s.name}` : 'Save this jump');
+    saveJumpBtn.title = s ? `Save to ${s.name}` : '';
   }
 
   saveJumpBtn.addEventListener('click', () => {
     if (!savedJump) return;
     const s = activeSession() || ensureTodaySession();
-    s.jumps.push({ id: uid(), ...savedJump });
+    const jump = { id: uid(), savedAt: Date.now(), ...savedJump };
+    s.jumps.push(jump);
     if (!persist()) return;                 // keep the UI honest if storage refused
     savedJump = null;
-    setNote(`Saved. ${plural(s.jumps.length, 'jump')} in this session.`, 'ok');
+    viewed = { sessionId: s.id, jumpId: jump.id };   // the new jump becomes the current one
+    setNote(`Saved to "${s.name}". ${plural(s.jumps.length, 'jump')} in this session.`, 'ok');
     refreshSaveButton();
     renderSessionLabel();
   });
 
   function renderSessionLabel() {
     const s = activeSession();
-    if (!s) { sessionName.textContent = '—'; refreshSaveButton(); return; }
+    if (!s) { sessionName.textContent = '—'; refreshSaveButton(); renderJumpNav(); return; }
     const m = sessionMean(s);
     sessionName.textContent = s.name +
       (s.jumps.length ? ` · ${plural(s.jumps.length, 'jump')} · ${m.toFixed(1)} cm avg` : ' · no jumps yet');
     refreshSaveButton();
+    renderJumpNav();
   }
+
+  /* ---- jumping between the jumps recorded in this session ---- */
+  function renderJumpNav() {
+    // The session being viewed, if any, otherwise the one a new jump would be saved to.
+    const s = sessions.find(x => viewed && x.id === viewed.sessionId) || activeSession();
+    const list = jumpsOf(s);
+    if (!list.length) {
+      jumpNav.classList.add('hidden');
+      jumpNavLabel.textContent = '—';
+      return;
+    }
+    jumpNav.classList.remove('hidden');
+    let i = list.findIndex(j => viewed && j.id === viewed.jumpId);
+    if (i < 0) i = list.length - 1;                   // default to the most recent jump
+    jumpNavLabel.textContent = `Jump ${i + 1} of ${list.length} · ${list[i].heightCm.toFixed(1)} cm`;
+    prevJumpBtn.disabled = i === 0;
+    nextJumpBtn.disabled = i === list.length - 1;
+  }
+
+  // Puts a stored jump back on screen. The order matters: selectTab first, so the
+  // measure panel is visible; then fill the readout; then redraw the arc, which needs
+  // only the stored flight time; and only then replay the markers, where the video
+  // happens to be the same one this jump came from.
+  function viewJump(session, jumpId) {
+    const list = jumpsOf(session);
+    const i = list.findIndex(j => j.id === jumpId);
+    if (i < 0) return;
+    const j = list[i];
+
+    selectTab('measure');
+    // Making this session active is what lets the stepper walk it. Otherwise the
+    // navigator would read today's session while the reading shows another one.
+    activeSessionId = session.id;
+    ensureTodaySession();
+    viewed = { sessionId: session.id, jumpId: j.id };
+    savedJump = null;
+
+    const cm = j.heightCm;
+    measureBadge.innerHTML = `${cm.toFixed(1)}<span class="unit">cm</span>`;
+    measureBadge.setAttribute('aria-label', `${cm.toFixed(1)} centimetres`);
+    const inches = isFinite(j.heightIn) ? j.heightIn : cm / 2.54;
+    const fpsKnown = isFinite(j.fps) ? `${fpsLabel(j.fps)} fps` : '';
+    readoutLine.innerHTML =
+      `<strong>${j.flightTime.toFixed(3)} s</strong> flight · ${plural(j.frames, 'frame')} @ ${fpsKnown} · ${inches.toFixed(1)} in`;
+
+    drawTrajectory(j.flightTime);
+    reading.classList.remove('hidden');
+    trajectory.classList.remove('animate');
+    void trajectory.offsetWidth;
+    trajectory.classList.add('animate');
+
+    const sameVideo = j.fps === fps && j.takeoffTime != null &&
+                      videoFilename.textContent === j.videoName;
+    if (sameVideo) {
+      restoringMarkers = true;              // this replay must not discard the viewed jump
+      takeoffTime = j.takeoffTime;
+      landingTime = j.landingTime;
+      renderMarkers();
+      restoringMarkers = false;
+    }
+
+    // the reading is now a stored jump, not a fresh measurement: nothing to save
+    refreshSaveButton();
+    setNote(`Viewing saved jump from "${session.name}", measured ${formatStamp(j.savedAt)}.`);
+    renderSessionLabel();
+  }
+
+  function formatStamp(ms) {
+    if (!isFinite(ms)) return 'earlier';
+    const d = new Date(ms);
+    const p = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+
+  function stepJump(delta) {
+    const s = sessions.find(x => viewed && x.id === viewed.sessionId) || activeSession();
+    const list = jumpsOf(s);
+    if (!list.length) return;
+    let i = viewed ? list.findIndex(j => j.id === viewed.jumpId) : list.length - 1;
+    if (i < 0) i = list.length - 1;
+    const next = Math.min(list.length - 1, Math.max(0, i + delta));
+    if (next === i) return;
+    viewJump(s, list[next].id);
+  }
+
+  prevJumpBtn.addEventListener('click', () => stepJump(-1));
+  nextJumpBtn.addEventListener('click', () => stepJump(1));
 
   document.getElementById('sessionRename').addEventListener('click', () => {
     const s = activeSession() || ensureTodaySession();
@@ -1560,6 +1724,7 @@
     sortSessions();
     persist();
     renderSessionLabel();
+    refreshSaveButton();
     renderCareer();
   });
 
@@ -1703,10 +1868,13 @@
       const m = sessionMean(s);
       const rows = s.jumps.slice().sort((a, b) => b.heightCm - a.heightCm).map(j => `
         <div class="jump-row">
-          <span class="jump-row-name">${escapeHtml(j.videoName || 'clip')}</span>
+          <button class="jump-row-name jump-open" type="button" data-open-jump="${j.id}" data-session="${s.id}"
+                  aria-label="Open jump of ${j.heightCm.toFixed(1)} centimetres from ${escapeHtml(s.name)}">
+            ${escapeHtml(j.videoName || 'clip')}
+          </button>
           <span class="jump-row-val">${j.heightCm.toFixed(1)} cm</span>
           <span>${j.flightTime.toFixed(3)} s</span>
-          <span>${j.fps} fps</span>
+          <span>${isFinite(j.fps) ? j.fps : '—'} fps</span>
           <button class="icon-btn danger" type="button" data-del-jump="${j.id}" data-session="${s.id}"
                   aria-label="Delete jump ${j.heightCm.toFixed(1)} centimetres from ${escapeHtml(s.name)}">
             <i class="ti ti-trash" aria-hidden="true"></i>
@@ -1756,11 +1924,19 @@
       persist(); renderCareer(); renderSessionLabel();
       return;
     }
+    const open = e.target.closest('[data-open-jump]');
+    if (open) {
+      const s = sessions.find(x => x.id === open.dataset.session);
+      if (s) viewJump(s, open.dataset.openJump);
+      return;
+    }
     const dj = e.target.closest('[data-del-jump]');
     if (dj) {
       const s = sessions.find(x => x.id === dj.dataset.session);
       if (!s) return;
       s.jumps = s.jumps.filter(j => j.id !== dj.dataset.delJump);
+      // a deleted jump cannot stay on screen
+      if (viewed && viewed.jumpId === dj.dataset.delJump) { viewed = null; hideReading(); }
       persist(); renderCareer(); renderSessionLabel();
       return;
     }
@@ -1769,6 +1945,7 @@
       const s = sessions.find(x => x.id === ds.dataset.delSession);
       if (!s) return;
       if (!confirm(`Delete "${s.name}" and its ${plural(s.jumps.length, 'jump')}? This cannot be undone.`)) return;
+      if (viewed && viewed.sessionId === ds.dataset.delSession) { viewed = null; hideReading(); }
       sessions = sessions.filter(x => x.id !== ds.dataset.delSession);
       if (activeSessionId === ds.dataset.delSession) {
         activeSessionId = null;
@@ -1856,6 +2033,7 @@
   ensureTodaySession();
   renderSessionLabel();
   renderCareer();
+  renderJumpNav();
   updateFpsUi();
   syncButtons();
   window.__appReady = true;
