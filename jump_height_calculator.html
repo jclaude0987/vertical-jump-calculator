@@ -324,7 +324,177 @@
       overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
     }
 
+    /* ---- Dashboards ------------------------------------------------------- */
+    .tabs {
+      display: flex; gap: 0.25rem; margin-bottom: 1rem;
+      background: var(--raised); border: 1px solid var(--hairline);
+      border-radius: var(--radius-lg); padding: 0.25rem;
+    }
+    .tab {
+      flex: 1; min-height: var(--tap);
+      font-family: var(--font-ui); font-size: 0.9375rem; font-weight: 600;
+      background: transparent; color: var(--muted);
+      border: none; border-radius: var(--radius-md); cursor: pointer;
+      transition: background-color 0.12s ease, color 0.12s ease;
+    }
+    .tab:hover { color: var(--ink); }
+    .tab[aria-selected="true"] { background: var(--ink); color: var(--raised); }
+
+    .session-bar {
+      display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+      background: var(--raised); border: 1px solid var(--hairline);
+      border-radius: var(--radius-lg); padding: 0.625rem 1.125rem; margin-bottom: 1rem;
+    }
+    .session-info { display: flex; flex-direction: column; min-width: 0; }
+    .session-label {
+      font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--muted); font-weight: 600;
+    }
+    .session-name {
+      font-family: var(--font-data); font-size: 1rem; font-weight: 700;
+      color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .session-edit {
+      display: flex; align-items: center; gap: 0.375rem;
+      min-height: var(--tap); padding: 0.5rem 0.875rem; flex-shrink: 0;
+      font-family: var(--font-ui); font-size: 0.875rem; font-weight: 500;
+      background: var(--raised); color: var(--ink);
+      border: 1px solid var(--line-strong); border-radius: var(--radius-md); cursor: pointer;
+    }
+    .session-edit:hover { background: var(--sunken); }
+
+    .save-btn {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.375rem;
+      margin-top: 0.75rem; min-height: var(--tap); padding: 0.5rem 0.75rem;
+      font-family: var(--font-ui); font-size: 0.9375rem; font-weight: 600;
+      background: var(--ink); color: var(--surface);
+      border: none; border-radius: var(--radius-md); cursor: pointer;
+      transition: opacity 0.12s ease;
+    }
+    .save-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .save-btn:hover:not(:disabled) { opacity: 0.85; }
+    .save-note { font-size: 0.8125rem; color: var(--muted); margin-top: 0.375rem; min-height: 1.25rem; }
+    .save-note.ok { color: var(--ok); }
+    .save-note.warn { color: var(--warn); }
+
+    .empty-state {
+      background: var(--raised); border: 1px solid var(--hairline);
+      border-radius: var(--radius-lg); padding: 3rem 1.5rem; text-align: center;
+    }
+    .empty-state i { font-size: 2.25rem; color: var(--muted); display: block; margin-bottom: 0.625rem; }
+    .empty-state p { font-size: 0.9375rem; color: var(--muted); line-height: 1.5; }
+    .empty-state strong { color: var(--ink); }
+    .empty-hint { margin-top: 0.375rem; font-size: 0.8125rem; }
+
+    .stat-strip { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.625rem; }
+    .stat {
+      background: var(--sunken); border: 1px solid var(--hairline);
+      border-radius: var(--radius-md); padding: 0.625rem 0.75rem;
+    }
+    .stat-label {
+      font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--muted); font-weight: 600;
+    }
+    .stat-val {
+      font-family: var(--font-data); font-size: 1.25rem; font-weight: 700;
+      font-variant-numeric: tabular-nums; color: var(--ink); line-height: 1.2;
+    }
+    .stat-val .unit { font-size: 0.8125rem; font-weight: 600; opacity: 0.7; margin-left: 0.125rem; }
+    .stat-sub { font-size: 0.75rem; color: var(--muted); font-family: var(--font-data); }
+
+    .chart-head, .list-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 0.75rem; margin-bottom: 0.625rem;
+    }
+    .list-head { flex-wrap: nowrap; }
+    .data-actions { display: flex; gap: 0.375rem; flex-shrink: 0; }
+    .chart-title { font-family: var(--font-ui); font-size: 0.9375rem; font-weight: 600; color: var(--ink); }
+    .range-row { display: flex; gap: 0.25rem; }
+    .range-btn {
+      min-height: 2.5rem; padding: 0.25rem 0.75rem;
+      font-family: var(--font-data); font-size: 0.8125rem; font-weight: 600;
+      background: var(--raised); color: var(--muted);
+      border: 1px solid var(--line-strong); border-radius: var(--radius-md); cursor: pointer;
+    }
+    .range-btn:hover { background: var(--sunken); color: var(--ink); }
+    .range-btn.active { background: var(--ink); color: var(--raised); border-color: var(--ink); }
+
+    .career-chart { width: 100%; height: 11.25rem; display: block; }
+    /* grid rules are decorative; the series itself carries the meaning */
+    .career-chart .grid { stroke: var(--hairline); stroke-width: 1; }
+    /* SVG text scales with the viewBox, so this is set in user units, not px. */
+    .career-chart .axis { font-family: var(--font-data); font-size: 9px; fill: var(--muted); }
+    .career-chart .series-halo { fill: none; stroke: var(--ink); stroke-width: 5; stroke-linejoin: round; stroke-linecap: round; }
+    /* Hi-vis is 1.35:1 on white, so the series is hi-vis over a dark halo. */
+    .career-chart .series { fill: none; stroke: var(--readout); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+    .career-chart .pt-halo { fill: var(--ink); }
+    .career-chart .pt { fill: var(--readout); }
+    .career-chart .pt-latest { fill: var(--readout); stroke: var(--ink); stroke-width: 2; }
+    .career-chart .bar-hit { fill: transparent; cursor: pointer; }
+    .career-chart .bar-hit:hover + .pt-halo,
+    .career-chart .bar-hit:focus-visible + .pt-halo { fill: var(--readout); }
+    .chart-legend {
+      font-family: var(--font-data); font-size: 0.75rem; color: var(--muted);
+      margin-top: 0.375rem; line-height: 1.5;
+    }
+
+    .ghost-btn {
+      display: flex; align-items: center; gap: 0.25rem;
+      min-height: 2.5rem; padding: 0.25rem 0.625rem;
+      font-family: var(--font-ui); font-size: 0.8125rem; font-weight: 500;
+      background: var(--raised); color: var(--muted);
+      border: 1px solid var(--line-strong); border-radius: var(--radius-md); cursor: pointer;
+    }
+    .ghost-btn:hover { background: var(--sunken); color: var(--ink); }
+
+    .session-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .session-row {
+      border: 1px solid var(--hairline); border-radius: var(--radius-md);
+      background: var(--sunken); overflow: hidden;
+    }
+    .session-row-head {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 0.625rem;
+    }
+    .session-row-main { flex: 1; min-width: 0; background: none; border: none; cursor: pointer; text-align: left; color: var(--ink); }
+    .session-row-date {
+      font-family: var(--font-data); font-size: 0.875rem; font-weight: 700; color: var(--ink);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .session-row-sub {
+      font-family: var(--font-data); font-size: 0.75rem; color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+    .session-row-mean {
+      font-family: var(--font-data); font-size: 1rem; font-weight: 700; color: var(--ink);
+      font-variant-numeric: tabular-nums; text-align: right; flex-shrink: 0;
+    }
+    .session-row-mean .unit { font-size: 0.75rem; opacity: 0.7; }
+    .icon-btn {
+      width: 2.25rem; height: 2.25rem; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: none; border: none; border-radius: var(--radius-md);
+      color: var(--muted); cursor: pointer;
+    }
+    .icon-btn:hover { background: var(--raised); color: var(--ink); }
+    .icon-btn.danger:hover { color: var(--warn); }
+    .jump-list { border-top: 1px solid var(--hairline); }
+    .jump-row {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.375rem 0.625rem; font-family: var(--font-data); font-size: 0.75rem;
+      font-variant-numeric: tabular-nums; color: var(--muted);
+      border-bottom: 1px solid var(--hairline);
+    }
+    .jump-row:last-child { border-bottom: none; }
+    .jump-row-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); }
+    .jump-row-val { color: var(--ink); font-weight: 600; }
+    .session-empty { padding: 0.5rem 0.625rem; font-size: 0.75rem; color: var(--muted); font-family: var(--font-ui); }
+
     .hidden { display: none !important; }
+
+    @media (min-width: 40rem) {
+      .stat-strip { grid-template-columns: repeat(4, 1fr); }
+    }
 
     @media (min-width: 40rem) {
       .header h1 { font-size: 1.875rem; }
@@ -354,6 +524,13 @@
       </button>
     </div>
 
+    <div class="tabs" role="tablist" aria-label="Dashboard">
+      <button class="tab" id="tabMeasure" role="tab" aria-selected="true" aria-controls="panelMeasure">Measure</button>
+      <button class="tab" id="tabCareer" role="tab" aria-selected="false" aria-controls="panelCareer" tabindex="-1">Career</button>
+    </div>
+
+    <div id="panelMeasure" role="tabpanel" aria-labelledby="tabMeasure">
+
     <button class="upload-zone" id="uploadZone" type="button">
       <i class="ti ti-video" aria-hidden="true"></i>
       <p><strong>Drop video here</strong> or click to browse</p>
@@ -362,6 +539,16 @@
     </button>
 
     <div id="mainUI" class="hidden">
+
+      <div class="session-bar">
+        <div class="session-info">
+          <span class="session-label">Session</span>
+          <span class="session-name" id="sessionName">—</span>
+        </div>
+        <button class="session-edit" id="sessionRename" type="button" aria-label="Rename or change the session date">
+          <i class="ti ti-calendar" aria-hidden="true"></i> Change
+        </button>
+      </div>
 
       <div class="section">
         <div class="fps-row" id="fpsRow">
@@ -416,12 +603,60 @@
         </svg>
         <div class="measure-badge" id="measureBadge">—<span class="unit">cm</span></div>
         <div class="readout-line" id="readoutLine"></div>
+        <button class="save-btn" id="saveJump" disabled><i class="ti ti-plus" aria-hidden="true"></i> Save to session</button>
+        <div class="save-note" id="saveNote" role="status" aria-live="polite"></div>
       </div>
 
       <div class="calc-bar">
         <button class="calc-btn" id="calcBtn" disabled>Calculate Jump Height</button>
       </div>
 
+    </div>
+    </div>
+
+    <div id="panelCareer" class="hidden" role="tabpanel" aria-labelledby="tabCareer">
+
+      <div class="empty-state" id="careerEmpty">
+        <i class="ti ti-chart-line" aria-hidden="true"></i>
+        <p><strong>No jumps recorded yet</strong></p>
+        <p class="empty-hint">Measure a jump and save it to your session. Its height becomes a point on this graph.</p>
+      </div>
+
+      <div id="careerBody" class="hidden">
+
+        <div class="section">
+          <div class="stat-strip" id="statStrip"></div>
+        </div>
+
+        <div class="section">
+          <div class="chart-head">
+            <h2 class="chart-title">Jump height over time</h2>
+            <div class="range-row" role="group" aria-label="Time range">
+              <button class="range-btn active" data-range="all" type="button">All</button>
+              <button class="range-btn" data-range="90" type="button">90d</button>
+              <button class="range-btn" data-range="30" type="button">30d</button>
+            </div>
+          </div>
+          <svg class="career-chart" id="careerChart" viewBox="0 0 340 180" preserveAspectRatio="none" role="img" aria-labelledby="careerChartTitle">
+            <title id="careerChartTitle">Session mean jump height over time</title>
+          </svg>
+          <p class="chart-summary sr-only" id="careerSummary"></p>
+          <p class="chart-legend" id="careerLegend"></p>
+        </div>
+
+        <div class="section">
+          <div class="list-head">
+            <h2 class="chart-title">Sessions</h2>
+            <div class="data-actions">
+              <button class="ghost-btn" id="exportData" type="button"><i class="ti ti-download" aria-hidden="true"></i> Export</button>
+              <button class="ghost-btn" id="importData" type="button"><i class="ti ti-upload" aria-hidden="true"></i> Import</button>
+              <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+            </div>
+          </div>
+          <div class="session-list" id="sessionList"></div>
+        </div>
+
+      </div>
     </div>
   </div>
   <script>
@@ -594,6 +829,7 @@
   }
 
   function renderMarkers() {
+    savedJump = null;                       // a marker change invalidates the unsaved result
     takeoffFrame = takeoffTime == null || fps == null
       ? null : clampFrame(Math.round(takeoffTime * fps));
     landingFrame = landingTime == null || fps == null
@@ -1115,6 +1351,17 @@
     trajectory.classList.remove('animate');
     void trajectory.offsetWidth;
     trajectory.classList.add('animate');
+
+    // arm the save: this result is now a candidate for the career record
+    savedJump = {
+      videoName: videoFilename.textContent || 'clip',
+      fps, frames,
+      flightTime: t,
+      heightCm: cm,
+      heightIn: inches
+    };
+    setNote('');
+    refreshSaveButton();
   }
 
   // Draws the flight path itself: a parabola from the marked takeoff frame to the
@@ -1154,8 +1401,461 @@
   }
 
   /* =========================================================================
+     CAREER DASHBOARD — sessions, daily means, and the trend chart
+
+     One session is one day and holds every jump measured that day. The chart
+     plots the session mean, which is the mean of that day's jumps.
+     ========================================================================= */
+
+  const STORE_KEY = 'vjc:sessions:v1';
+  const STORE_VERSION = 1;
+  const MB = 1e6;
+
+  let sessions = [];                  // newest first
+  let activeSessionId = null;         // the session a new jump is saved into
+  let savedJump = null;               // the result currently shown, not yet stored
+  let chartRange = 'all';
+
+  const tabMeasure   = document.getElementById('tabMeasure');
+  const tabCareer    = document.getElementById('tabCareer');
+  const panelMeasure = document.getElementById('panelMeasure');
+  const panelCareer  = document.getElementById('panelCareer');
+  const sessionName  = document.getElementById('sessionName');
+  const saveJumpBtn  = document.getElementById('saveJump');
+  const saveNote     = document.getElementById('saveNote');
+  const careerEmpty  = document.getElementById('careerEmpty');
+  const careerBody   = document.getElementById('careerBody');
+  const statStrip    = document.getElementById('statStrip');
+  const careerChart  = document.getElementById('careerChart');
+  const careerSummary = document.getElementById('careerSummary');
+  const careerLegend = document.getElementById('careerLegend');
+  const sessionList  = document.getElementById('sessionList');
+
+  function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  // Local calendar date. Avoid toISOString(): it converts to UTC, so a jump at
+  // 8pm local in a negative-offset zone would be filed under tomorrow.
+  function todayKey(d = new Date()) {
+    const p = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+
+  function loadSessions() {
+    try {
+      const raw = localStorage.getItem(STORE_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter(s => s && typeof s.date === 'string' && Array.isArray(s.jumps));
+    } catch (e) {
+      console.debug('[career] could not read stored sessions', e);
+      return [];
+    }
+  }
+
+  function persist() {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(sessions));
+      return true;
+    } catch (e) {
+      console.debug('[career] save failed', e);
+      setNote('Could not save to this browser. Storage may be full or blocked — export first.',
+              'warn');
+      return false;
+    }
+  }
+
+  function setNote(msg, cls) {
+    saveNote.textContent = msg || '';
+    saveNote.className = 'save-note' + (cls ? ' ' + cls : '');
+  }
+
+  function sessionMean(s) {
+    if (!s.jumps.length) return null;
+    return s.jumps.reduce((a, j) => a + j.heightCm, 0) / s.jumps.length;
+  }
+
+  function sortSessions() {
+    sessions.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  }
+
+  function ensureTodaySession() {
+    const key = todayKey();
+    let s = sessions.find(x => x.date === key);
+    if (!s) {
+      s = { id: uid(), date: key, name: key, jumps: [] };
+      sessions.unshift(s);
+      sortSessions();
+    }
+    activeSessionId = s.id;
+    return s;
+  }
+
+  function activeSession() {
+    return sessions.find(s => s.id === activeSessionId) || null;
+  }
+
+  /* ---- tabs ---- */
+  function selectTab(which) {
+    const measure = which === 'measure';
+    tabMeasure.setAttribute('aria-selected', String(measure));
+    tabCareer.setAttribute('aria-selected', String(!measure));
+    tabMeasure.tabIndex = measure ? 0 : -1;
+    tabCareer.tabIndex = measure ? -1 : 0;
+    panelMeasure.classList.toggle('hidden', !measure);
+    panelCareer.classList.toggle('hidden', measure);
+    if (!measure) renderCareer();
+  }
+  tabMeasure.addEventListener('click', () => selectTab('measure'));
+  tabCareer.addEventListener('click', () => selectTab('career'));
+  [tabMeasure, tabCareer].forEach(t => {
+    t.addEventListener('keydown', e => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      e.preventDefault();
+      const go = e.key === 'ArrowRight' ? 'career' : 'measure';
+      selectTab(go);
+      (go === 'career' ? tabCareer : tabMeasure).focus();
+    });
+  });
+
+  /* ---- saving a jump ---- */
+  function refreshSaveButton() {
+    const s = activeSession();
+    saveJumpBtn.disabled = !savedJump;
+    saveJumpBtn.innerHTML = s
+      ? `<i class="ti ti-plus" aria-hidden="true"></i> Save to ${s.date}`
+      : '<i class="ti ti-plus" aria-hidden="true"></i> Save to session';
+  }
+
+  saveJumpBtn.addEventListener('click', () => {
+    if (!savedJump) return;
+    const s = activeSession() || ensureTodaySession();
+    s.jumps.push({ id: uid(), ...savedJump });
+    if (!persist()) return;                 // keep the UI honest if storage refused
+    savedJump = null;
+    setNote(`Saved. ${plural(s.jumps.length, 'jump')} in this session.`, 'ok');
+    refreshSaveButton();
+    renderSessionLabel();
+  });
+
+  function renderSessionLabel() {
+    const s = activeSession();
+    if (!s) { sessionName.textContent = '—'; refreshSaveButton(); return; }
+    const m = sessionMean(s);
+    sessionName.textContent = s.name +
+      (s.jumps.length ? ` · ${plural(s.jumps.length, 'jump')} · ${m.toFixed(1)} cm avg` : ' · no jumps yet');
+    refreshSaveButton();
+  }
+
+  document.getElementById('sessionRename').addEventListener('click', () => {
+    const s = activeSession() || ensureTodaySession();
+    const next = prompt('Session name', s.name);
+    if (next === null) return;
+    const trimmed = next.trim();
+    if (trimmed) s.name = trimmed;
+    const d = prompt('Date (YYYY-MM-DD)', s.date);
+    if (d !== null && /^\d{4}-\d{2}-\d{2}$/.test(d.trim())) s.date = d.trim();
+    sortSessions();
+    persist();
+    renderSessionLabel();
+    renderCareer();
+  });
+
+  /* ---- chart ---- */
+  function visibleSessions() {
+    // sessions is newest-first. Filter on that, then flip once so the chart reads
+    // left-to-right oldest-to-newest.
+    const withJumps = sessions.filter(s => s.jumps.length);
+    if (chartRange === 'all') return withJumps.slice().reverse();
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - Number(chartRange));
+    const key = todayKey(cutoff);
+    return withJumps.filter(s => s.date >= key).reverse();
+  }
+
+  function plural(n, word) { return `${n} ${word}${n === 1 ? '' : 's'}`; }
+
+  function shortDate(key) {
+    const [, m, d] = key.split('-');
+    return `${Number(m)}/${Number(d)}`;
+  }
+
+  function renderStats() {
+    const withJumps = sessions.filter(s => s.jumps.length);
+    const all = withJumps.flatMap(s => s.jumps);
+    if (!all.length) { statStrip.innerHTML = ''; return; }
+
+    const best = all.reduce((a, j) => (j.heightCm > a.heightCm ? j : a));
+    const recent = withJumps.slice(0, 5).map(sessionMean);
+    const recentMean = recent.reduce((a, b) => a + b, 0) / recent.length;
+
+    let trendHtml = '<span class="stat-sub">needs two sessions</span>';
+    if (withJumps.length >= 2) {
+      const first = sessionMean(withJumps[withJumps.length - 1]);
+      const last = sessionMean(withJumps[0]);
+      const delta = last - first;
+      const sign = delta > 0 ? '+' : '';
+      trendHtml = `<span class="stat-sub">${sign}${delta.toFixed(1)} cm since ${shortDate(withJumps[withJumps.length - 1].date)}</span>`;
+    }
+
+    statStrip.innerHTML = [
+      ['Personal best', `${best.heightCm.toFixed(1)}<span class="unit">cm</span>`, best.date],
+      ['Sessions', String(withJumps.length), `${all.length} jumps total`],
+      ['Last 5 sessions', `${recentMean.toFixed(1)}<span class="unit">cm</span>`, 'mean of means'],
+      ['Trend', trendHtml, '']
+    ].map(([label, val, sub]) => `
+      <div class="stat">
+        <div class="stat-label">${label}</div>
+        <div class="stat-val">${val}</div>
+        ${sub ? `<div class="stat-sub">${sub}</div>` : ''}
+      </div>`).join('');
+  }
+
+  function renderChart() {
+    const rows = visibleSessions();
+    careerChart.innerHTML = `<title id="careerChartTitle">Session mean jump height over time</title>`;
+    if (!rows.length) {
+      careerSummary.textContent = 'No sessions in this range.';
+      careerLegend.textContent = '';
+      return;
+    }
+
+    const W = 340, H = 180;
+    const m = { t: 14, r: 12, b: 26, l: 34 };
+    const plotW = W - m.l - m.r, plotH = H - m.t - m.b;
+
+    const vals = rows.map(sessionMean);
+    let lo = Math.min(...vals), hi = Math.max(...vals);
+    if (hi - lo < 1) { const c = (hi + lo) / 2; lo = c - 0.5; hi = c + 0.5; }
+    const pad = (hi - lo) * 0.18;
+    lo -= pad; hi += pad;
+    const span = hi - lo;
+
+    const n = rows.length;
+    const xAt = i => n === 1 ? m.l + plotW / 2 : m.l + (i / (n - 1)) * plotW;
+    const yAt = v => m.t + plotH - ((v - lo) / span) * plotH;
+
+    const ns = 'http://www.w3.org/2000/svg';
+    const el = (tag, attrs) => {
+      const e = document.createElementNS(ns, tag);
+      for (const k in attrs) e.setAttribute(k, attrs[k]);
+      return e;
+    };
+
+    // horizontal grid + y labels
+    const ticks = 4;
+    for (let t = 0; t <= ticks; t++) {
+      const v = lo + (span * t) / ticks;
+      const y = yAt(v);
+      careerChart.appendChild(el('line', { class: 'grid', x1: m.l, y1: y, x2: W - m.r, y2: y }));
+      const lbl = el('text', { class: 'axis', x: m.l - 5, y: y + 3, 'text-anchor': 'end' });
+      lbl.textContent = v.toFixed(1);
+      careerChart.appendChild(lbl);
+    }
+
+    // x labels: first, last, and a middle sample so it stays readable
+    const labelIdx = n <= 4 ? rows.map((_, i) => i) : [0, Math.floor((n - 1) / 2), n - 1];
+    labelIdx.forEach(i => {
+      const lbl = el('text', {
+        class: 'axis', x: xAt(i), y: H - 8,
+        'text-anchor': i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'
+      });
+      lbl.textContent = shortDate(rows[i].date);
+      careerChart.appendChild(lbl);
+    });
+
+    const pts = rows.map((s, i) => [xAt(i), yAt(sessionMean(s))]);
+    if (n > 1) {
+      const d = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+      careerChart.appendChild(el('path', { class: 'series-halo', d }));   // dark underlay
+      careerChart.appendChild(el('path', { class: 'series', d }));        // hi-vis on top
+    }
+
+    // points, with a wider invisible hit target for pointer and keyboard
+    rows.forEach((s, i) => {
+      const [x, y] = pts[i];
+      const isLast = i === n - 1;
+      const hit = el('rect', { class: 'bar-hit', x: x - 8, y: m.t, width: 16, height: plotH, tabindex: '0', role: 'button' });
+      hit.setAttribute('aria-label', `${s.name}: ${sessionMean(s).toFixed(1)} centimetres from ${plural(s.jumps.length, 'jump')}`);
+      careerChart.appendChild(hit);
+      careerChart.appendChild(el('circle', { class: 'pt-halo', cx: x, cy: y, r: 5.5 }));
+      careerChart.appendChild(el('circle', { class: isLast ? 'pt-latest' : 'pt', cx: x, cy: y, r: 3.5 }));
+    });
+
+    const latest = sessionMean(rows[n - 1]);
+    const bestRow = rows.reduce((a, s) => (sessionMean(s) > sessionMean(a) ? s : a));
+    careerLegend.textContent = `${plural(n, 'session')} · latest ${latest.toFixed(1)} cm · best ${sessionMean(bestRow).toFixed(1)} cm (${bestRow.date})`;
+
+    const first = sessionMean(rows[0]);
+    careerSummary.textContent =
+      `${plural(n, 'session')} plotted, each point the mean of that day's jumps. ` +
+      `Latest ${latest.toFixed(1)} centimetres on ${rows[n - 1].name}. ` +
+      `Best ${sessionMean(bestRow).toFixed(1)} centimetres on ${bestRow.name}. ` +
+      `Change across the range ${(latest - first >= 0 ? '+' : '')}${(latest - first).toFixed(1)} centimetres.`;
+  }
+
+  /* ---- session list ---- */
+  function renderList() {
+    if (!sessions.length) { sessionList.innerHTML = ''; return; }
+    sessionList.innerHTML = sessions.map(s => {
+      const m = sessionMean(s);
+      const rows = s.jumps.slice().sort((a, b) => b.heightCm - a.heightCm).map(j => `
+        <div class="jump-row">
+          <span class="jump-row-name">${escapeHtml(j.videoName || 'clip')}</span>
+          <span class="jump-row-val">${j.heightCm.toFixed(1)} cm</span>
+          <span>${j.flightTime.toFixed(3)} s</span>
+          <span>${j.fps} fps</span>
+          <button class="icon-btn danger" type="button" data-del-jump="${j.id}" data-session="${s.id}"
+                  aria-label="Delete jump ${j.heightCm.toFixed(1)} centimetres from ${escapeHtml(s.name)}">
+            <i class="ti ti-trash" aria-hidden="true"></i>
+          </button>
+        </div>`).join('');
+      return `
+        <div class="session-row">
+          <div class="session-row-head">
+            <button class="session-row-main" type="button" data-toggle="${s.id}"
+                    aria-expanded="false" aria-label="Show jumps in ${escapeHtml(s.name)}">
+              <div class="session-row-date">${escapeHtml(s.name)}</div>
+              <div class="session-row-sub">${plural(s.jumps.length, 'jump')}${s.name === s.date ? '' : ' · ' + s.date}</div>
+            </button>
+            <div class="session-row-mean">${m == null ? '—' : m.toFixed(1) + '<span class="unit">cm</span>'}</div>
+            <button class="icon-btn" type="button" data-rename="${s.id}" aria-label="Rename ${escapeHtml(s.name)}">
+              <i class="ti ti-pencil" aria-hidden="true"></i>
+            </button>
+            <button class="icon-btn danger" type="button" data-del-session="${s.id}" aria-label="Delete session ${escapeHtml(s.name)}">
+              <i class="ti ti-trash" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="jump-list hidden" id="jumps-${s.id}">${rows || '<div class="session-empty">No jumps saved yet.</div>'}</div>
+        </div>`;
+    }).join('');
+  }
+
+  function escapeHtml(v) {
+    return String(v).replace(/[&<>"']/g, c =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  sessionList.addEventListener('click', e => {
+    const toggle = e.target.closest('[data-toggle]');
+    if (toggle) {
+      const box = document.getElementById('jumps-' + toggle.dataset.toggle);
+      const open = box.classList.toggle('hidden') === false;
+      toggle.setAttribute('aria-expanded', String(open));
+      return;
+    }
+    const rn = e.target.closest('[data-rename]');
+    if (rn) {
+      const s = sessions.find(x => x.id === rn.dataset.rename);
+      if (!s) return;
+      const next = prompt('Session name', s.name);
+      if (next === null) return;
+      if (next.trim()) s.name = next.trim();
+      persist(); renderCareer(); renderSessionLabel();
+      return;
+    }
+    const dj = e.target.closest('[data-del-jump]');
+    if (dj) {
+      const s = sessions.find(x => x.id === dj.dataset.session);
+      if (!s) return;
+      s.jumps = s.jumps.filter(j => j.id !== dj.dataset.delJump);
+      persist(); renderCareer(); renderSessionLabel();
+      return;
+    }
+    const ds = e.target.closest('[data-del-session]');
+    if (ds) {
+      const s = sessions.find(x => x.id === ds.dataset.delSession);
+      if (!s) return;
+      if (!confirm(`Delete "${s.name}" and its ${plural(s.jumps.length, 'jump')}? This cannot be undone.`)) return;
+      sessions = sessions.filter(x => x.id !== ds.dataset.delSession);
+      if (activeSessionId === ds.dataset.delSession) {
+        activeSessionId = null;
+        ensureTodaySession();
+      }
+      persist(); renderCareer(); renderSessionLabel();
+    }
+  });
+
+  document.querySelectorAll('.range-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      chartRange = b.dataset.range;
+      document.querySelectorAll('.range-btn').forEach(x => x.classList.toggle('active', x === b));
+      renderChart();
+    });
+  });
+
+  function renderCareer() {
+    const any = sessions.some(s => s.jumps.length);
+    careerEmpty.classList.toggle('hidden', any);
+    careerBody.classList.toggle('hidden', !any);
+    if (!any) return;
+    renderStats();
+    renderChart();
+    renderList();
+  }
+
+  /* ---- export / import ---- */
+  document.getElementById('exportData').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify({ version: STORE_VERSION, exported: new Date().toISOString(), sessions }, null, 2)],
+                          { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `jump-history-${todayKey()}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+
+  document.getElementById('importData').addEventListener('click', () => {
+    document.getElementById('importFile').click();
+  });
+
+  document.getElementById('importFile').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        const incoming = Array.isArray(data) ? data : data.sessions;
+        if (!Array.isArray(incoming)) throw new Error('no sessions array');
+        if (data.version && data.version > STORE_VERSION) {
+          setNote('That file was written by a newer version of the app.', 'warn');
+        }
+        // merge by date so an import adds to history instead of replacing it
+        incoming.forEach(s => {
+          if (!s || typeof s.date !== 'string' || !Array.isArray(s.jumps)) return;
+          const existing = sessions.find(x => x.date === s.date);
+          if (existing) {
+            const have = new Set(existing.jumps.map(j => j.id));
+            s.jumps.forEach(j => { if (!have.has(j.id)) existing.jumps.push(j); });
+          } else {
+            sessions.push({ id: s.id || uid(), date: s.date, name: s.name || s.date, jumps: s.jumps });
+          }
+        });
+        sortSessions();
+        persist();
+        renderCareer();
+        renderSessionLabel();
+        setNote(`Imported ${plural(incoming.length, 'session')}.`, 'ok');
+      } catch (err) {
+        setNote('That file is not a jump-history export.', 'warn');
+      }
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  });
+
+  /* =========================================================================
      INIT
      ========================================================================= */
+  sessions = loadSessions();
+  sortSessions();
+  ensureTodaySession();
+  renderSessionLabel();
+  renderCareer();
   updateFpsUi();
   syncButtons();
   window.__appReady = true;

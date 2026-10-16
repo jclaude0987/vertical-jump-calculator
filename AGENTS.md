@@ -68,6 +68,23 @@ If it is ever wanted back, the hard-won lesson is worth keeping. The measured qu
 
 Other load-bearing details from that work: anchor thresholds to the measured noise floor rather than a share of the peak (a proportional threshold reports takeoff several frames late and landing several frames early); step the refine pass on the frame grid (`f / fps`), because off-grid times let the browser round to whichever frame it likes and produce a systematic one-frame error; and keep the confidence gate conservative, since refusing to mark is better than a wrong guess.
 
+## The career dashboard
+
+Two dashboards in one file, switched by `selectTab` toggling `hidden` on `#panelMeasure` and `#panelCareer`. There is no router and no chart library; the line graph is hand-built SVG in `renderChart`.
+
+- **One session is one day and holds many jumps.** `sessionMean(s)` is the mean of `s.jumps`, and that is what the chart plots. Never plot individual jumps on the main series; the daily mean is the point of the view. Individual jumps live in the expandable list.
+- **Storage is `localStorage` under `vjc:sessions:v1`, with `STORE_VERSION` exported alongside it.** The key and the export envelope version must stay in step, or import cannot detect an older or newer shape.
+- **Dates are local calendar dates via `todayKey()`, never `toISOString()`.** `toISOString()` converts to UTC, so an 8pm jump in a negative-offset zone would be filed under tomorrow. The same trap applies to any new date handling.
+- **`sessions` is kept newest-first** for the list, and `visibleSessions()` reverses once to give the chart oldest-first. Flip only once, at the end of the pipeline.
+- **The range filter compares `date` strings.** ISO `YYYY-MM-DD` sorts lexicographically, which is why the comparison is `s.date >= key` rather than parsing `Date` objects.
+- **The chart series is hi-vis over a dark halo.** Hi-vis is 1.35:1 on white, so a single `--readout` stroke disappears; `.series-halo` draws `--ink` underneath at a heavier width. Do not remove the halo.
+- **Every point has an invisible 16px wide hit rect with a `tabindex` and an `aria-label`.** That is the only keyboard and pointer target for a data point, so keep it when the chart changes.
+- **`renderStats`, `renderChart` and `renderList` all recompute from `sessions`.** There is no incremental update; after any mutation, call `persist()` then `renderCareer()`.
+- **Import merges by date and de-duplicates by jump id** rather than replacing, so a user can combine two histories. Keep that behaviour.
+- **`savedJump` is armed by `showReading` and cleared by `renderMarkers`.** A marker change invalidates the unsaved result, and the save button is disabled whenever it is null.
+- `escapeHtml` is applied to every user-controlled string interpolated into the list (session names and video file names, both user-supplied). Keep it.
+- Write dates and counts through `plural()` rather than inline ternaries; an inline one produced "1 jumps" once already.
+
 ## Values duplicated across files
 
 These drift easily because they exist in more than one place:
