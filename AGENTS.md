@@ -50,23 +50,23 @@ Details that cost real debugging time:
 - **`totalFrames` is `floor(duration * fps)`, deliberately not the container sample count.** These files carry PTS offsets and discontinuities, so the sample count does not map onto the `0..duration` timeline the slider indexes. `parseMp4` still returns `frameCount`, but don't wire it into `totalFrames`.
 - Detection over HTTP fails sometimes; on `file://` in Chrome, Firefox, and Safari it was not verified. If reported frame rates ever look wrong, check that first.
 
-### Markers
+### Marking and the result
 
-Markers are stored as **media time** (`takeoffTime`, `landingTime`), and `renderMarkers` derives the frame indices from the current `fps`. This is why changing the frame rate re-quantises the markers instead of destroying them — the old behaviour wiped them via `resetMarkers`, which is now only used when loading a new video. Analysis results are also timed, so an fps change does not invalidate them.
+- Markers are stored as **media time** (`takeoffTime`, `landingTime`), and `renderMarkers` derives the frame indices from the current `fps`. This is why changing the frame rate re-quantises the markers instead of destroying them. `resetMarkers` only runs when loading a new video.
+- Height math lives in the `calcBtn` handler: `t = (landingFrame - takeoffFrame) / fps`, then `d = ½ · 9.81 · (t/2)²`. Note this counts `landing - takeoff` rather than `- 1`; it is the JH-2 definition and it over-reads by roughly one frame, which is about 13% of height at 30 fps. That is a deliberate, consistent choice, not an oversight.
+- `showReading` fills the hi-vis badge, the mono readout line, and calls `drawTrajectory`.
+- `drawTrajectory` draws a parabola from the marked takeoff to the marked landing, with the apex dimensioned. The apex height scales with the measured flight time against a 1.2 s reference, so the diagram is a readout and not decoration.
+- The reading block is hidden by `hideReading()` from `renderMarkers`, so any marker change invalidates a shown result.
 
-### Auto-detection of takeoff and landing
+### There is no automatic takeoff/landing detection
 
-The measured quantity is **ground contact**, not height. For each sampled frame the code measures how much of a band just above the foot level differs from a reference plate: standing, the band matches and reads ~0; once the feet leave, it shows floor where the reference had legs and reads high.
+This was built, measured, and then **removed at the user's request**. It worked: against synthetic clips with a known jump it landed within 1-2 frames and refused correctly on the no-jump clips. Do not rebuild it without being asked.
 
-**Do not "simplify" this to the lowest row that differs from the plate.** That was the first implementation and it is wrong. The reference is a per-pixel median over the clip, so it normally *contains the standing athlete* — they stand for most of the clip. During flight the vacated silhouette below the airborne feet also differs from that reference, so the lowest differing row stays pinned to the ground for the whole flight and the signal never rises. The earlier version only appeared to work because a "row needs 10% of the width" filter happened to exclude the narrow legs, which made it track the hips by accident.
+If it is ever wanted back, the hard-won lesson is worth keeping. The measured quantity should be **ground contact**, not height: for each sampled frame, measure how much of a band just above the foot level differs from a per-pixel median reference plate. Standing, the band matches and reads ~0; once the feet leave, it shows floor where the reference had legs and reads high.
 
-Other decisions that are load-bearing:
+**Do not use "the lowest row that differs from the plate".** That was the first implementation and it is wrong. The reference is a median over the clip, so it normally *contains the standing athlete* — they stand for most of the clip. During flight the vacated silhouette below the airborne feet also differs from that reference, so the lowest differing row stays pinned to the ground for the whole flight and the signal never rises. The earlier version only appeared to work because a "row needs 10% of the width" filter happened to exclude the narrow legs, which made it track the hips by accident.
 
-- **The foot level is the lowest row the scene ever differs at**, because the vacated silhouette reaches down to it. That anchors the measuring band without needing to know the floor line.
-- **Thresholds are anchored to the measured noise floor, not to a share of the peak.** Using a proportion of the excursion reported takeoff several frames late and landing several frames early, because contact only registers once the feet have already travelled a noticeable distance. Noise is estimated from the grounded half of the samples only.
-- **`refineContact` steps on the frame grid** (`f / fps`). Sampling at off-grid times lets the browser round to whichever frame it likes, which showed up as a systematic one-frame error.
-- **Each sample costs a seek** (~20ms Chrome, ~75ms Firefox), so cost is linear in samples and `COARSE_MAX` is the knob. When the iframe/decode notes above are respected, a 5s clip analyses in ~5-6s and a 14s clip in ~16s. Lowering `COARSE_MAX` trades long-clip coarse density for time; the refine window scales with the coarse interval automatically.
-- The confidence gate must stay conservative. Refusing to mark is the designed failure mode: the app never applies markers it isn't sure about, and a wrong guess is worse than asking. A deep counter-movement followed by a shallow jump is genuinely ambiguous from pixels alone and is refused on purpose.
+Other load-bearing details from that work: anchor thresholds to the measured noise floor rather than a share of the peak (a proportional threshold reports takeoff several frames late and landing several frames early); step the refine pass on the frame grid (`f / fps`), because off-grid times let the browser round to whichever frame it likes and produce a systematic one-frame error; and keep the confidence gate conservative, since refusing to mark is better than a wrong guess.
 
 ## Values duplicated across files
 

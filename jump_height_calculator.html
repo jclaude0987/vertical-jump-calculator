@@ -254,28 +254,6 @@
     }
     .chip-val.unset { color: var(--muted); font-weight: 400; }
 
-    .auto-btn {
-      width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.375rem;
-      margin-top: 0.75rem; min-height: var(--tap); padding: 0.5rem 0.75rem;
-      font-family: var(--font-ui); font-size: 0.9375rem; font-weight: 500;
-      border: 1px solid var(--line-strong); border-radius: var(--radius-md);
-      background: var(--raised); color: var(--ink); cursor: pointer;
-      transition: background-color 0.12s ease;
-    }
-    .auto-btn:hover:not(:disabled) { background: var(--sunken); }
-    .auto-btn:disabled { opacity: 0.45; cursor: default; }
-    .auto-btn i { font-size: 1.125rem; }
-
-    .auto-status { font-size: 0.8125rem; line-height: 1.45; color: var(--muted); margin-top: 0.375rem; }
-    .auto-status.warn { color: var(--warn); }
-    .auto-status.ok { color: var(--ok); }
-
-    .height-chart {
-      width: 100%; height: 5.25rem; display: block; margin-top: 0.625rem;
-      border: 1px solid var(--hairline); border-radius: var(--radius-md);
-      background: var(--sunken); cursor: crosshair;
-    }
-
     /* ---- The measurement ---------------------------------------------------
        The arc is the result. The reading sits at the apex of the trajectory it
        was derived from, so the number is a position rather than a decoration. */
@@ -335,11 +313,6 @@
     }
     .calc-btn:disabled { opacity: 0.35; cursor: not-allowed; }
     .calc-btn:hover:not(:disabled) { opacity: 0.85; }
-
-    .chart-caption {
-      font-family: var(--font-data); font-size: 0.75rem; color: var(--muted);
-      margin-top: 0.375rem;
-    }
 
     .video-filename {
       font-family: var(--font-data); font-size: 0.75rem; color: var(--muted);
@@ -428,10 +401,6 @@
           <div class="marker-chip"><div class="chip-label">Frames in air</div><div class="chip-val unset" id="framesInAir">—</div></div>
         </div>
 
-        <canvas class="height-chart hidden" id="heightChart" aria-label="Foot contact signal over time"></canvas>
-        <div class="chart-caption hidden" id="chartCaption">Foot contact, measured from the pixels</div>
-        <button class="auto-btn" id="autoDetectBtn" disabled><i class="ti ti-wand" aria-hidden="true"></i> Detect takeoff &amp; landing</button>
-        <div class="auto-status" id="autoStatus" role="status" aria-live="polite"></div>
       </div>
 
       <div class="reading hidden" id="reading">
@@ -488,13 +457,9 @@
   const trajLblB     = document.getElementById('trajLblB');
   const measureBadge = document.getElementById('measureBadge');
   const readoutLine  = document.getElementById('readoutLine');
-  const chartCaption = document.getElementById('chartCaption');
   const videoFilename = document.getElementById('videoFilename');
   const fpsRow       = document.getElementById('fpsRow');
   const fpsNote      = document.getElementById('fpsNote');
-  const autoDetectBtn = document.getElementById('autoDetectBtn');
-  const autoStatus   = document.getElementById('autoStatus');
-  const heightChart  = document.getElementById('heightChart');
 
   /* =========================================================================
      STATE
@@ -513,11 +478,7 @@
   let rafId = null;
   let sliderDragging = false;
   let objectURL = null;
-  let busy = false;               // analysis in flight
-  let analysis = null;            // last successful motion analysis
   let loadToken = 0;              // invalidates async work when a new video loads
-  let analysisToken = 0;          // invalidates an in-flight analysis
-  let autoRan = false;            // auto-detection fires once per video
 
   /* =========================================================================
      TIMELINE  (frame index <-> media time)
@@ -546,7 +507,6 @@
     videoEl.currentTime = frameToTime(f);
     frameSlider.value = String(f);
     updateCounter();
-    drawChart();
   }
 
   function updateCounter() {
@@ -610,7 +570,6 @@
     updateFpsUi();
     if (videoEl.src && isFinite(videoEl.duration)) recomputeTimeline();
     syncButtons();
-    maybeAutoDetect();
   }
 
   // Delegated so the dynamically-added detected-rate button works too.
@@ -657,12 +616,7 @@
 
   function resetMarkers() {
     takeoffTime = null; landingTime = null;
-    analysis = null;
-    analysisToken++;
-    hideChart();
     hideReading();
-    autoStatus.textContent = '';
-    autoStatus.className = 'auto-status';
     renderMarkers();
   }
 
@@ -676,7 +630,6 @@
     document.getElementById('nextFrame').disabled = !ready;
     markTakeoffBtn.disabled = !ready;
     markLandingBtn.disabled = !ready;
-    autoDetectBtn.disabled = !ready || busy;
     calcBtn.disabled = !ready || !hasValidMarks();
   }
 
@@ -694,7 +647,7 @@
 
   newVideoBtn.addEventListener('click', () => {
     if (isPlaying) stopPlayback();
-    loadToken++; analysisToken++;
+    loadToken++;
     if (objectURL) { URL.revokeObjectURL(objectURL); objectURL = null; }
     videoEl.removeAttribute('src');
     videoEl.load();
@@ -703,7 +656,7 @@
     uploadZone.classList.remove('hidden');
     newVideoBtn.classList.add('hidden');
     videoFilename.textContent = '';
-    busy = false; autoRan = false; detectionDone = false;
+    detectionDone = false;
     fps = null; fpsSource = null; totalFrames = 0;
     fpsNote.className = 'fps-note';
     fpsNote.textContent = 'Detecting frame rate…';
@@ -713,9 +666,7 @@
 
   async function loadVideo(file) {
     const token = ++loadToken;
-    analysisToken++;
-    busy = false; autoRan = false; detectionDone = false;
-    analysis = null;
+    detectionDone = false;
     if (objectURL) URL.revokeObjectURL(objectURL);
     objectURL = URL.createObjectURL(file);
     videoEl.src = objectURL;
@@ -1109,8 +1060,7 @@
       if (!sliderDragging && fps != null) {
         frameSlider.value = String(Math.min(currentFrame(), Math.max(0, totalFrames - 1)));
         updateCounter();
-        drawChart();
-      }
+          }
       if (videoEl.ended) { stopPlayback(); return; }
       rafId = requestAnimationFrame(rafLoop);
     }
@@ -1202,441 +1152,6 @@
     const len = 2 * Math.hypot(apexX - x0, apexY - baseY) * 1.06;
     trajectory.style.setProperty('--arc-len', len.toFixed(1));
   }
-
-  /* =========================================================================
-     MOTION ANALYSIS — locate the takeoff and landing frames from the pixels
-     ========================================================================= */
-
-  const ANALYSIS_MAX_W = 300;   // analysis resolution; smaller = faster, less precise
-  const DIFF_T = 22;            // luma difference that counts as "not the reference"
-  const COARSE_MAX = 120;       // cap on sampled frames (every sample costs a seek)
-  const PLATE_SAMPLES = 16;     // frames used for the per-pixel median reference
-  const CONTACT_BAND = 0.30;    // contact band height, as a share of the subject's span
-
-  class Cancelled extends Error {}
-
-  function median(values) {
-    if (!values.length) return NaN;
-    const a = values.slice().sort((x, y) => x - y);
-    const mid = a.length >> 1;
-    return a.length % 2 ? a[mid] : (a[mid - 1] + a[mid]) / 2;
-  }
-
-  function madSigma(devs) {
-    const m = median(devs);
-    return 1.4826 * median(devs.map(d => Math.abs(d - m)));
-  }
-
-  function seekTo(t) {
-    return new Promise((resolve, reject) => {
-      const target = Math.max(0, Math.min(t, Math.max(0, videoEl.duration - 1e-3)));
-      if (Math.abs(videoEl.currentTime - target) < 1e-5 && videoEl.readyState >= 2) { resolve(); return; }
-      const cleanup = () => {
-        videoEl.removeEventListener('seeked', onSeeked);
-        videoEl.removeEventListener('error', onError);
-      };
-      const onSeeked = () => { cleanup(); resolve(); };
-      const onError = () => { cleanup(); reject(new Error('seek failed')); };
-      videoEl.addEventListener('seeked', onSeeked, { once: true });
-      videoEl.addEventListener('error', onError, { once: true });
-      try { videoEl.currentTime = target; } catch (e) { cleanup(); reject(e); }
-    });
-  }
-
-  // The measured quantity is GROUND CONTACT, not height. For each sampled frame we
-  // measure how much of a narrow band just above the foot level differs from the
-  // reference. Standing, the band matches the reference and reads ~0; once the feet
-  // leave, the band shows floor where the reference had legs and reads high.
-  //
-  // It is deliberately not "the lowest row that differs". When the reference contains
-  // the standing athlete — the normal case, since they stand for most of the clip —
-  // that measure stays pinned to the ground through the whole flight, because the
-  // vacated silhouette below the airborne feet differs from the reference too.
-  async function analyzeMotion(token, report) {
-    const duration = videoEl.duration;
-    const cw = videoEl.videoWidth, ch = videoEl.videoHeight;
-    if (!isFinite(duration) || duration <= 0 || !cw || !ch) return null;
-
-    const scale = Math.min(1, ANALYSIS_MAX_W / cw);
-    const W = Math.max(16, Math.round(cw * scale));
-    const H = Math.max(16, Math.round(ch * scale));
-    const N = W * H;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = W; canvas.height = H;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    const check = () => { if (token !== analysisToken) throw new Cancelled(); };
-
-    async function lumaAt(t) {
-      await seekTo(t);
-      await frameReady();
-      check();
-      ctx.drawImage(videoEl, 0, 0, W, H);
-      const px = ctx.getImageData(0, 0, W, H).data;
-      const g = new Uint8Array(N);
-      for (let i = 0, j = 0; i < N; i++, j += 4) {
-        g[i] = (px[j] * 77 + px[j + 1] * 150 + px[j + 2] * 29) >> 8;
-      }
-      return g;
-    }
-
-    // --- 1. sample the clip once; reuse those frames for the reference (no extra seeking)
-    const coarseN = Math.max(40, Math.min(COARSE_MAX, Math.round(duration * 24)));
-    const times = [];
-    const frames = [];
-    for (let i = 0; i < coarseN; i++) {
-      const t = duration * (i + 0.5) / coarseN;
-      frames.push(await lumaAt(t));
-      times.push(t);
-      report(0.70 * (i + 1) / coarseN, `Scanning video… ${Math.round(100 * (i + 1) / coarseN)}%`);
-    }
-    check();
-
-    // --- 2. reference plate, and where the scene ever differs from it
-    const plateStep = Math.max(1, Math.floor(frames.length / PLATE_SAMPLES));
-    const plateFrames = [];
-    for (let i = 0; i < frames.length; i += plateStep) plateFrames.push(frames[i]);
-    const plate = new Uint8Array(N);
-    const scratch = new Uint8Array(plateFrames.length);
-    for (let p = 0; p < N; p++) {
-      for (let k = 0; k < plateFrames.length; k++) scratch[k] = plateFrames[k][p];
-      plate[p] = median(Array.from(scratch));
-    }
-    plateFrames.length = 0;
-
-    const colMass = new Int32Array(W);
-    const rowMass = new Int32Array(H);
-    const seen = new Uint8Array(N);
-    for (const g of frames) {
-      for (let y = 0; y < H; y++) {
-        const row = y * W;
-        for (let x = 0; x < W; x++) {
-          if (!seen[row + x] && Math.abs(g[row + x] - plate[row + x]) > DIFF_T) {
-            seen[row + x] = 1;
-            colMass[x]++;
-            rowMass[y]++;
-          }
-        }
-      }
-    }
-
-    // --- 3. contact band = the subject's columns x the rows just above the foot level.
-    // The lowest row the scene ever differs at is the foot level: whenever the athlete is
-    // airborne, the vacated silhouette reaches down to it.
-    const rowMin = Math.max(2, Math.round(H * 0.01));
-    let ry0 = -1, ry1 = -1;
-    for (let y = 0; y < H; y++) {
-      if (rowMass[y] >= rowMin) { if (ry0 < 0) ry0 = y; ry1 = y; }
-    }
-    const colMin = Math.max(2, Math.round(H * 0.02));
-    const cols = [];
-    for (let x = 0; x < W; x++) if (colMass[x] >= colMin) cols.push(x);
-    if (ry0 < 0 || (ry1 - ry0) < 3 || cols.length < 3) {
-      frames.length = 0;
-      return { confident: false, reason: 'could not locate the athlete in the frame', times: [], values: [] };
-    }
-    const cx0 = cols[0], cx1 = cols[cols.length - 1];
-    const spanW = cx1 - cx0 + 1;
-    const bandH = Math.max(3, Math.round((ry1 - ry0 + 1) * CONTACT_BAND));
-    const bandTop = Math.max(0, ry1 - bandH + 1);
-    const bandArea = spanW * (ry1 - bandTop + 1);
-
-    report(0.72, 'Locating the jump…');
-
-    function contactOf(g) {
-      let changed = 0;
-      for (let y = bandTop; y <= ry1; y++) {
-        const row = y * W;
-        for (let x = cx0; x <= cx1; x++) if (Math.abs(g[row + x] - plate[row + x]) > DIFF_T) changed++;
-      }
-      return changed / bandArea;
-    }
-
-    const raw = frames.map(contactOf);
-    frames.length = 0;
-    check();
-
-    // --- 4. change points on the contact signal
-    const clean = smooth(raw);
-    const base = { times, values: clean, bandTop, bandBottom: ry1, cx0, cx1 };
-    const finite = clean.filter(isFinite);
-    if (finite.length < 12) {
-      return { ...base, confident: false, reason: 'not enough of the subject visible' };
-    }
-
-    const sorted = finite.slice().sort((a, b) => a - b);
-    // most of the clip is spent on the ground, so a low percentile is the quiet level
-    const baseline = sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.25))];
-    const peak = sorted[sorted.length - 1];
-    const excursion = peak - baseline;
-    // Noise is estimated from the grounded half only. The threshold has to sit just
-    // above that noise floor rather than at a share of the peak: contact starts mattering
-    // the moment the feet move at all, and a proportional threshold reports takeoff
-    // several frames late and landing several frames early.
-    const groundedish = finite.filter(v => v <= baseline + excursion * 0.5);
-    const sigma = Math.max(1e-4, madSigma(groundedish.map(v => v - baseline)));
-    if (!(excursion > 0.008)) {
-      return { ...base, confident: false, reason: 'no clear jump in the footage', baseline, peak, sigma, excursion };
-    }
-    const enter = baseline + Math.max(0.35 * excursion, 12 * sigma);
-    // Purely noise-anchored: "have the feet left the ground at all", which in band terms
-    // is a 1-2px shift of the legs. The small absolute floor covers codec noise.
-    const exit = baseline + Math.max(5 * sigma, 0.02);
-
-    const runs = [];
-    let cur = null;
-    for (let i = 0; i < clean.length; i++) {
-      if (clean[i] > enter) {
-        if (!cur) cur = { i0: i, i1: i };
-        else cur.i1 = i;
-      } else if (cur) { runs.push(cur); cur = null; }
-    }
-    if (cur) runs.push(cur);
-    if (!runs.length) {
-      return { ...base, confident: false, reason: 'no clear jump in the footage', baseline, peak, sigma, excursion };
-    }
-    runs.sort((a, b) => (b.i1 - b.i0) - (a.i1 - a.i0));
-    const main = runs[0];
-    const secondary = runs.slice(1).filter(r => (r.i1 - r.i0) >= 0.3 * (main.i1 - main.i0)).length;
-
-    let ti = main.i0, li = main.i1;
-    for (let i = main.i0; i >= 0; i--) { if (clean[i] <= exit) { ti = i; break; } }
-    for (let i = main.i1; i < clean.length; i++) { if (clean[i] <= exit) { li = i; break; } }
-    let takeoffTime = times[ti];
-    let landingTime = times[li];
-
-    // --- 5. refine both transitions at the full frame rate, on the frame grid
-    const coarseDt = duration / coarseN;
-    const view = { ctx, W, H, plate, bandTop, bandBottom: ry1, cx0, cx1, bandArea };
-    report(0.75, 'Refining to the exact frame…');
-    const r1 = await refineContact(takeoffTime, -1, coarseDt * 1.5, exit, view, token);
-    if (r1 != null) takeoffTime = r1;
-    report(0.9, 'Refining to the exact frame…');
-    const r2 = await refineContact(landingTime, +1, coarseDt * 1.5, exit, view, token);
-    if (r2 != null) landingTime = r2;
-    check();
-
-    // --- 6. confidence
-    const reasons = [];
-    if (!(excursion >= Math.max(0.02, 8 * sigma))) reasons.push('the subject barely moves');
-    if (secondary > 0) reasons.push('more than one movement detected');
-    const flight = landingTime - takeoffTime;
-    if (!(flight >= 0.12 && flight <= 1.5)) reasons.push('implausible flight time');
-    const restingFrac = clean.filter(v => v <= exit).length / clean.length;
-    if (restingFrac < 0.3) reasons.push('no clear resting phase on the ground');
-    if (spanW > W * 0.8) reasons.push('too much of the frame is moving');
-    const grounded = clean.filter(v => v <= exit);
-    const meanGrounded = grounded.length ? grounded.reduce((a, b) => a + b, 0) / grounded.length : 1;
-    if (meanGrounded > 0.04) reasons.push('the background is not stable');
-
-    return {
-      ...base,
-      baseline, peak, sigma, excursion, enter, exit,
-      takeoffTime, landingTime,
-      confident: reasons.length === 0,
-      reason: reasons.join(', ')
-    };
-  }
-
-  function smooth(values) {
-    const out = new Array(values.length);
-    for (let i = 0; i < values.length; i++) {
-      if (!isFinite(values[i])) { out[i] = NaN; continue; }
-      const win = [];
-      for (let k = -1; k <= 1; k++) {
-        const v = values[i + k];
-        if (isFinite(v)) win.push(v);
-      }
-      out[i] = median(win);
-    }
-    return out;
-  }
-
-  // Step one frame at a time across the window and return the last (direction -1) or
-  // first (direction +1) frame that is back down at the grounded level. Sampling on the
-  // frame grid (f / fps) matters: off-grid times make the browser round to whichever
-  // frame it likes, which showed up as a systematic one-frame error.
-  async function refineContact(centre, direction, halfWindow, exit, view, token) {
-    if (fps == null) return null;
-    const { ctx, W, H, plate, bandTop, bandBottom, cx0, cx1, bandArea } = view;
-    const first = Math.max(0, Math.ceil((centre - halfWindow) * fps));
-    const last = Math.min(Math.round((videoEl.duration - 1e-3) * fps), Math.floor((centre + halfWindow) * fps));
-    let best = null;
-    for (let f = first; f <= last; f++) {
-      if (token !== analysisToken) throw new Cancelled();
-      const t = f / fps;
-      await seekTo(t);
-      await frameReady();
-      ctx.drawImage(videoEl, 0, 0, W, H);
-      const px = ctx.getImageData(0, 0, W, H).data;
-      let changed = 0;
-      for (let y = bandTop; y <= bandBottom; y++) {
-        const row = y * W;
-        for (let x = cx0; x <= cx1; x++) {
-          const i = (row + x) * 4;
-          const luma = (px[i] * 77 + px[i + 1] * 150 + px[i + 2] * 29) >> 8;
-          if (Math.abs(luma - plate[row + x]) > DIFF_T) changed++;
-        }
-      }
-      if (changed / bandArea <= exit) {
-        if (direction < 0) best = t;
-        else if (best == null) best = t;
-      }
-    }
-    return best;
-  }
-
-  /* =========================================================================
-     AUTO-DETECTION FLOW
-     ========================================================================= */
-  function maybeAutoDetect() {
-    if (autoRan) return;
-    if (fps == null || !videoEl.src) return;
-    autoRan = true;
-    runAutoDetect();
-  }
-
-  autoDetectBtn.addEventListener('click', () => {
-    if (busy) return;
-    runAutoDetect();
-  });
-
-  async function runAutoDetect() {
-    if (fps == null || !videoEl.src) return;
-    const token = ++analysisToken;
-    if (isPlaying) stopPlayback();
-    busy = true;
-    syncButtons();
-    autoStatus.className = 'auto-status';
-    autoStatus.textContent = 'Analysing motion…';
-    try {
-      const res = await analyzeMotion(token, (frac, msg) => {
-        if (token !== analysisToken) return;
-        autoStatus.textContent = msg;
-      });
-      if (token !== analysisToken) return;
-      if (!res) {
-        autoStatus.className = 'auto-status warn';
-        autoStatus.textContent = 'Could not analyse this video. Mark the frames manually.';
-        return;
-      }
-      analysis = res;
-      drawChart();
-      if (res.confident) {
-        takeoffTime = res.takeoffTime;
-        landingTime = res.landingTime;
-        renderMarkers();
-        seekToFrame(takeoffFrame);
-        autoStatus.className = 'auto-status ok';
-        autoStatus.textContent = `Found takeoff (frame ${takeoffFrame}) and landing (frame ${landingFrame}). ` +
-          `Check the markers against the video and adjust with the arrow buttons if needed.`;
-      } else {
-        autoStatus.className = 'auto-status warn';
-        autoStatus.textContent = `Couldn't confidently detect the jump (${res.reason}). ` +
-          `Mark takeoff and landing manually.`;
-      }
-    } catch (e) {
-      if (e instanceof Cancelled) return;
-      console.debug('[auto] failed', e);
-      if (token === analysisToken) {
-        autoStatus.className = 'auto-status warn';
-        autoStatus.textContent = 'Automatic detection failed on this video. Mark the frames manually.';
-      }
-    } finally {
-      if (token === analysisToken) { busy = false; syncButtons(); }
-    }
-  }
-
-  /* =========================================================================
-     FOOT-HEIGHT CHART
-     ========================================================================= */
-  function hideChart() {
-    heightChart.classList.add('hidden');
-    chartCaption.classList.add('hidden');
-  }
-
-  function chartColors() {
-    const cs = getComputedStyle(document.documentElement);
-    const get = n => cs.getPropertyValue(n).trim() || '#888';
-    return {
-      line: get('--text-primary'),
-      grid: get('--border-mid'),
-      muted: get('--text-tertiary'),
-      accent: get('--warn-text')
-    };
-  }
-
-  function drawChart() {
-    if (!analysis || !analysis.times || !analysis.values) { hideChart(); return; }
-    const finite = analysis.values.filter(isFinite);
-    if (!finite.length) { hideChart(); return; }
-    heightChart.classList.remove('hidden');
-    chartCaption.classList.remove('hidden');
-    const dpr = window.devicePixelRatio || 1;
-    const cssW = heightChart.clientWidth || 600;
-    const cssH = 84;
-    const w = Math.round(cssW * dpr), h = Math.round(cssH * dpr);
-    if (heightChart.width !== w || heightChart.height !== h) { heightChart.width = w; heightChart.height = h; }
-    const g = heightChart.getContext('2d');
-    g.setTransform(dpr, 0, 0, dpr, 0, 0);
-    g.clearRect(0, 0, cssW, cssH);
-
-    const c = chartColors();
-    const { times, values, exit } = analysis;
-    const baseline = isFinite(analysis.baseline) ? analysis.baseline : 0;
-    const duration = videoEl.duration;
-    const lo = Math.min(baseline, ...finite);
-    const hi = Math.max(...finite);
-    const pad = Math.max(1e-4, (hi - lo) * 0.1);
-    const span = Math.max(1e-6, (hi - lo) + pad * 2);
-    const xOf = t => (t / duration) * cssW;
-    const yOf = v => cssH - 6 - ((v - lo + pad) / span) * (cssH - 12);
-
-    // grounded level + the threshold that separates contact from flight
-    g.strokeStyle = c.grid;
-    g.setLineDash([3, 3]);
-    g.lineWidth = 1;
-    [baseline, exit].forEach(v => {
-      if (!isFinite(v)) return;
-      g.beginPath(); g.moveTo(0, yOf(v)); g.lineTo(cssW, yOf(v)); g.stroke();
-    });
-    g.setLineDash([]);
-
-    // takeoff / landing markers
-    g.strokeStyle = c.accent;
-    g.lineWidth = 1.5;
-    [analysis.takeoffTime, analysis.landingTime].forEach(t => {
-      if (t == null) return;
-      g.beginPath(); g.moveTo(xOf(t), 0); g.lineTo(xOf(t), cssH); g.stroke();
-    });
-
-    // signal
-    g.strokeStyle = c.line;
-    g.lineWidth = 1.5;
-    g.beginPath();
-    let started = false;
-    for (let i = 0; i < times.length; i++) {
-      if (!isFinite(values[i])) { started = false; continue; }
-      const x = xOf(times[i]), y = yOf(values[i]);
-      if (!started) { g.moveTo(x, y); started = true; } else g.lineTo(x, y);
-    }
-    g.stroke();
-
-    // playhead
-    if (fps != null) {
-      g.strokeStyle = c.muted;
-      g.lineWidth = 1;
-      const x = xOf(Math.min(videoEl.currentTime, duration));
-      g.beginPath(); g.moveTo(x, 0); g.lineTo(x, cssH); g.stroke();
-    }
-  }
-
-  heightChart.addEventListener('click', e => {
-    if (!analysis || fps == null) return;
-    const rect = heightChart.getBoundingClientRect();
-    const frac = (e.clientX - rect.left) / rect.width;
-    seekToFrame(Math.round(frac * videoEl.duration * fps));
-  });
 
   /* =========================================================================
      INIT
