@@ -11,290 +11,415 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg-primary: #ffffff;
-      --bg-secondary: #f5f5f3;
-      --bg-tertiary: #eeede9;
-      --text-primary: #1a1a18;
-      --text-secondary: #6b6b67;
-      --text-tertiary: #a0a09b;
-      --border-light: rgba(0,0,0,0.1);
-      --border-mid: rgba(0,0,0,0.18);
-      --border-strong: rgba(0,0,0,0.28);
-      --warn-text: #b45309;
-      --ok-text: #15803d;
+      /* Surfaces: warm paper, the wall you chalk-mark. */
+      --surface: #f7f7f4;
+      --raised: #ffffff;
+      --sunken: #efefea;
+
+      /* Content. Contrast measured against --raised and --surface. */
+      --ink: #14141a;            /* 18.35:1 on raised */
+      --muted: #55555e;          /*  7.38:1 on raised  (was 2.41:1) */
+
+      /* Lines. A boundary that identifies a control must reach 3:1. */
+      --line-strong: #767676;    /*  4.54:1 on raised  (was 1.53:1) */
+      --hairline: #e4e4df;       /* decorative only, non-text */
+
+      /* The measurement. Hi-vis is a FILL carrying dark ink, never text or a
+         hairline: #d8e836 as a line on white is 1.35:1. Ink on it is 13.55:1. */
+      --readout: #d8e836;
+      --readout-ink: #14141a;   /* pinned in both appearances: hi-vis always carries dark ink */
+
+      --ok: #0f6b3d;             /*  6.58:1 on raised */
+      --warn: #8a4b00;           /*  6.80:1 on raised */
+
       --radius-md: 8px;
       --radius-lg: 12px;
+      --tap: 44px;               /* minimum touch target */
+
+      --font-ui: 'Barlow', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      --font-display: 'Barlow Condensed', 'Barlow', -apple-system, system-ui, sans-serif;
+      --font-data: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
     }
 
     @media (prefers-color-scheme: dark) {
       :root {
-        --bg-primary: #1e1e1c;
-        --bg-secondary: #2a2a28;
-        --bg-tertiary: #323230;
-        --text-primary: #f0efeb;
-        --text-secondary: #9a9a94;
-        --text-tertiary: #6a6a64;
-        --border-light: rgba(255,255,255,0.08);
-        --border-mid: rgba(255,255,255,0.14);
-        --border-strong: rgba(255,255,255,0.22);
-        --warn-text: #fbbf24;
-        --ok-text: #4ade80;
+        --surface: #131316;
+        --raised: #1c1c20;
+        --sunken: #101013;
+        --ink: #f4f4f0;          /* 15.40:1 on raised */
+        --muted: #a3a3ad;        /*  6.79:1 on raised  (was 2.64:1) */
+        --line-strong: #75757f;  /*  3.73:1 on raised */
+        --hairline: #2f2f35;
+        --ok: #4ade80;
+        --warn: #fbbf24;
+        --readout-ink: #14141a;
       }
     }
 
+    /* Increase Contrast: promote the two tokens that were tuned to just pass. */
+    @media (prefers-contrast: more) {
+      :root { --muted: #3a3a42; --line-strong: #4a4a52; }
+    }
+    @media (prefers-contrast: more) and (prefers-color-scheme: dark) {
+      :root { --muted: #d0d0d8; --line-strong: #9a9aa4; }
+    }
+
+    html { font-size: 100%; }
+
     body {
-      font-family: 'Barlow', sans-serif;
-      background: var(--bg-tertiary);
-      color: var(--text-primary);
+      font-family: var(--font-ui);
+      font-size: 1rem;
+      line-height: 1.45;
+      background: var(--surface);
+      color: var(--ink);
       min-height: 100vh;
       display: flex;
       justify-content: center;
-      padding: 2rem 1rem;
+      padding: 1.5rem 1rem calc(1.5rem + env(safe-area-inset-bottom));
     }
 
-    .app {
-      width: 100%;
-      max-width: 640px;
+    .app { width: 100%; max-width: 40rem; }
+
+    /* Visible focus for keyboard and switch users. */
+    :focus-visible {
+      outline: 2px solid var(--ink);
+      outline-offset: 2px;
+      border-radius: 2px;
     }
 
     .header {
       display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 1.5rem;
-      border-bottom: 0.5px solid var(--border-light);
-      padding-bottom: 1rem;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
     }
-    .header-left { display: flex; align-items: baseline; gap: 12px; }
     .header h1 {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 26px; font-weight: 700;
-      letter-spacing: 0.04em; text-transform: uppercase;
-      color: var(--text-primary);
-    }
-    .header-sub {
-      font-size: 13px; color: var(--text-secondary);
-      font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
+      font-family: var(--font-display);
+      font-size: 1.625rem; font-weight: 700;
+      letter-spacing: 0.01em;
+      color: var(--ink);
     }
 
     .new-video-btn {
-      display: flex; align-items: center; gap: 6px;
-      padding: 7px 14px; font-size: 13px; font-weight: 500;
-      font-family: 'Barlow', sans-serif;
-      border: 0.5px solid var(--border-mid);
+      display: flex; align-items: center; justify-content: center; gap: 0.375rem;
+      min-height: var(--tap); padding: 0.5rem 1rem;
+      font-family: var(--font-ui); font-size: 0.9375rem; font-weight: 500;
+      border: 1px solid var(--line-strong);
       border-radius: var(--radius-md);
-      background: var(--bg-secondary);
-      color: var(--text-secondary); cursor: pointer; transition: all 0.12s;
+      background: var(--raised);
+      color: var(--ink); cursor: pointer;
+      transition: background-color 0.12s ease;
     }
-    .new-video-btn:hover { background: var(--bg-primary); color: var(--text-primary); border-color: var(--border-strong); }
-    .new-video-btn i { font-size: 16px; }
+    .new-video-btn:hover { background: var(--sunken); }
+    .new-video-btn i { font-size: 1.125rem; }
 
     .upload-zone {
-      border: 1px dashed var(--border-mid);
+      width: 100%;
+      border: 2px dashed var(--line-strong);
       border-radius: var(--radius-lg);
-      padding: 3rem 2rem; text-align: center; cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
-      background: var(--bg-secondary); margin-bottom: 1.5rem;
+      padding: 2.5rem 1.5rem; text-align: center; cursor: pointer;
+      transition: background-color 0.15s ease;
+      background: var(--raised); margin-bottom: 1.25rem;
+      font-family: var(--font-ui); color: var(--ink);
     }
-    .upload-zone:hover { border-color: var(--border-strong); background: var(--bg-primary); }
-    .upload-zone i { font-size: 36px; color: var(--text-tertiary); display: block; margin-bottom: 10px; }
-    .upload-zone p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
-    .upload-zone strong { color: var(--text-primary); }
+    .upload-zone:hover { background: var(--sunken); }
+    .upload-zone i { font-size: 2.25rem; color: var(--muted); display: block; margin-bottom: 0.625rem; }
+    .upload-zone p { font-size: 0.9375rem; color: var(--muted); line-height: 1.5; }
+    .upload-zone strong { color: var(--ink); }
+    .upload-hint { margin-top: 0.375rem; font-size: 0.8125rem; }
 
     .section {
-      background: var(--bg-primary);
-      border: 0.5px solid var(--border-light);
+      background: var(--raised);
+      border: 1px solid var(--hairline);
       border-radius: var(--radius-lg);
-      padding: 1rem 1.25rem;
+      padding: 1rem 1.125rem;
       margin-bottom: 1rem;
     }
-    .section-label {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
-      text-transform: uppercase; color: var(--text-secondary);
-      margin-bottom: 10px;
+
+    video {
+      width: 100%; border-radius: var(--radius-md); display: block;
+      margin-bottom: 0.625rem; background: #000;
+      max-height: 22.5rem; object-fit: contain;
     }
 
-    video { width: 100%; border-radius: var(--radius-md); display: block; margin-bottom: 10px; background: #000; max-height: 360px; object-fit: contain; }
-
-    .fps-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+    .fps-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
     .fps-btn {
-      flex: 1; min-width: 60px; padding: 8px 0; font-size: 13px; font-weight: 600;
-      font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.05em;
-      background: var(--bg-secondary); border: 0.5px solid var(--border-mid);
-      border-radius: var(--radius-md); cursor: pointer; color: var(--text-secondary); transition: all 0.12s;
+      flex: 1 1 auto; min-width: 3.75rem; min-height: var(--tap);
+      padding: 0.5rem 0.25rem;
+      font-family: var(--font-data); font-size: 0.9375rem; font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      background: var(--raised); border: 1px solid var(--line-strong);
+      border-radius: var(--radius-md); cursor: pointer; color: var(--ink);
+      transition: background-color 0.12s ease, color 0.12s ease;
     }
-    .fps-btn:hover:not(:disabled) { background: var(--bg-primary); color: var(--text-primary); }
-    .fps-btn.active { background: var(--text-primary); color: var(--bg-primary); border-color: var(--text-primary); }
+    .fps-btn:hover:not(:disabled) { background: var(--sunken); }
+    .fps-btn.active {
+      background: var(--ink); color: var(--raised);
+      border-color: var(--ink); font-weight: 700;
+    }
     .fps-btn:disabled { cursor: default; }
 
     .fps-note {
-      font-size: 12px; line-height: 1.45; color: var(--text-tertiary);
-      min-height: 17px; margin-bottom: 2px;
+      font-size: 0.8125rem; line-height: 1.45; color: var(--muted);
+      min-height: 1.25rem; margin-top: 0.5rem;
     }
-    .fps-note.warn { color: var(--warn-text); }
-    .fps-note.ok { color: var(--ok-text); }
+    .fps-note.warn { color: var(--warn); }
+    .fps-note.ok { color: var(--ok); }
 
+    /* The element box is the hit region. Keep it 44px tall and style only the
+       track, so the visible rail stays thin while the target stays reachable. */
     input[type=range] {
-      width: 100%; height: 4px; cursor: pointer;
-      accent-color: var(--text-primary);
-      margin-bottom: 0;
+      -webkit-appearance: none; appearance: none;
+      width: 100%; height: var(--tap);
+      background: transparent; cursor: pointer;
+      margin-bottom: 0; display: block;
     }
-    input[type=range]:disabled { opacity: 0.4; cursor: default; }
+    input[type=range]:disabled { opacity: 0.45; cursor: default; }
+    input[type=range]::-webkit-slider-runnable-track {
+      height: 4px; border-radius: 2px; background: var(--line-strong);
+    }
+    input[type=range]::-moz-range-track {
+      height: 4px; border-radius: 2px; background: var(--line-strong);
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 1.5rem; height: 1.5rem; border-radius: 50%;
+      background: var(--ink); border: 2px solid var(--raised);
+      margin-top: -0.625rem;
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 1.5rem; height: 1.5rem; border-radius: 50%;
+      background: var(--ink); border: 2px solid var(--raised);
+    }
 
-    .frame-markers { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
+    .frame-markers {
+      display: flex; justify-content: space-between;
+      font-family: var(--font-data); font-size: 0.75rem;
+      font-variant-numeric: tabular-nums;
+      color: var(--muted); margin-top: 0.125rem;
+    }
 
-    .playback-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .playback-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
     .play-btn {
-      width: 36px; height: 36px; border-radius: 50%;
+      width: var(--tap); height: var(--tap); border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      border: 0.5px solid var(--border-mid); cursor: pointer;
-      background: var(--bg-secondary); transition: all 0.12s; flex-shrink: 0;
+      border: 1px solid var(--line-strong); cursor: pointer;
+      background: var(--raised); transition: background-color 0.12s ease; flex-shrink: 0;
     }
-    .play-btn:hover { background: var(--bg-primary); }
-    .play-btn i { font-size: 16px; color: var(--text-primary); }
+    .play-btn:hover:not(:disabled) { background: var(--sunken); }
+    .play-btn:disabled { opacity: 0.45; cursor: default; }
+    .play-btn i { font-size: 1.125rem; color: var(--ink); }
     .frame-counter {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: var(--text-secondary);
+      font-family: var(--font-data); font-size: 0.875rem; font-weight: 600;
+      font-variant-numeric: tabular-nums; color: var(--ink);
+      margin-left: 0.25rem;
     }
     .step-btn {
-      width: 30px; height: 30px; border-radius: var(--radius-md);
+      width: var(--tap); height: var(--tap); border-radius: var(--radius-md);
       display: flex; align-items: center; justify-content: center;
-      border: 0.5px solid var(--border-light); cursor: pointer;
-      background: transparent; transition: all 0.12s; flex-shrink: 0;
+      border: 1px solid var(--line-strong); cursor: pointer;
+      background: var(--raised); transition: background-color 0.12s ease; flex-shrink: 0;
     }
-    .step-btn:hover:not(:disabled) { border-color: var(--border-mid); background: var(--bg-secondary); }
-    .step-btn:disabled { opacity: 0.35; cursor: default; }
-    .step-btn i { font-size: 14px; color: var(--text-primary); }
+    .step-btn:hover:not(:disabled) { background: var(--sunken); }
+    .step-btn:disabled { opacity: 0.45; cursor: default; }
+    .step-btn i { font-size: 1.125rem; color: var(--ink); }
 
-    .mark-controls { display: flex; gap: 8px; margin-bottom: 10px; margin-top: 12px; }
+    .mark-controls { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
     .mark-btn {
-      flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
-      padding: 9px 12px; font-size: 13px; font-weight: 500;
-      border: 0.5px solid var(--border-mid); border-radius: var(--radius-md);
-      cursor: pointer; background: var(--bg-secondary); color: var(--text-secondary); transition: all 0.12s;
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.375rem;
+      min-height: var(--tap); padding: 0.5rem 0.75rem;
+      font-family: var(--font-ui); font-size: 0.9375rem; font-weight: 500;
+      border: 1px solid var(--line-strong); border-radius: var(--radius-md);
+      cursor: pointer; background: var(--raised); color: var(--ink);
+      transition: background-color 0.12s ease;
     }
-    .mark-btn:hover:not(:disabled) { background: var(--bg-primary); color: var(--text-primary); }
-    .mark-btn.set { border-color: var(--border-strong); color: var(--text-primary); background: var(--bg-primary); }
+    .mark-btn:hover:not(:disabled) { background: var(--sunken); }
+    .mark-btn.set { background: var(--ink); color: var(--raised); border-color: var(--ink); }
     .mark-btn:disabled { opacity: 0.45; cursor: default; }
-    .mark-btn i { font-size: 16px; }
+    .mark-btn i { font-size: 1.125rem; }
 
-    .markers-display { display: flex; gap: 8px; }
+    .markers-display { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
     .marker-chip {
-      flex: 1; padding: 6px 10px;
+      flex: 1; padding: 0.5rem 0.625rem;
       border-radius: var(--radius-md);
-      border: 0.5px solid var(--border-light);
-      background: var(--bg-secondary);
+      border: 1px solid var(--hairline);
+      background: var(--sunken);
     }
-    .chip-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); font-weight: 600; }
-    .chip-val { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; color: var(--text-primary); }
-    .chip-val.unset { color: var(--text-tertiary); font-weight: 400; }
+    .chip-label {
+      font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--muted); font-weight: 600;
+    }
+    .chip-val {
+      font-family: var(--font-data); font-size: 1.125rem; font-weight: 700;
+      font-variant-numeric: tabular-nums; color: var(--ink);
+    }
+    .chip-val.unset { color: var(--muted); font-weight: 400; }
 
     .auto-btn {
-      width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;
-      margin-top: 12px; padding: 10px 12px; font-size: 13px; font-weight: 500;
-      font-family: 'Barlow', sans-serif;
-      border: 0.5px solid var(--border-mid); border-radius: var(--radius-md);
-      background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer; transition: all 0.12s;
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.375rem;
+      margin-top: 0.75rem; min-height: var(--tap); padding: 0.5rem 0.75rem;
+      font-family: var(--font-ui); font-size: 0.9375rem; font-weight: 500;
+      border: 1px solid var(--line-strong); border-radius: var(--radius-md);
+      background: var(--raised); color: var(--ink); cursor: pointer;
+      transition: background-color 0.12s ease;
     }
-    .auto-btn:hover:not(:disabled) { background: var(--bg-primary); color: var(--text-primary); border-color: var(--border-strong); }
+    .auto-btn:hover:not(:disabled) { background: var(--sunken); }
     .auto-btn:disabled { opacity: 0.45; cursor: default; }
-    .auto-btn i { font-size: 16px; }
+    .auto-btn i { font-size: 1.125rem; }
 
-    .auto-status { font-size: 12px; line-height: 1.45; color: var(--text-tertiary); margin-top: 6px; min-height: 17px; }
-    .auto-status.warn { color: var(--warn-text); }
-    .auto-status.ok { color: var(--ok-text); }
+    .auto-status { font-size: 0.8125rem; line-height: 1.45; color: var(--muted); margin-top: 0.375rem; }
+    .auto-status.warn { color: var(--warn); }
+    .auto-status.ok { color: var(--ok); }
 
     .height-chart {
-      width: 100%; height: 84px; display: block; margin-top: 10px;
-      border: 0.5px solid var(--border-light); border-radius: var(--radius-md);
-      background: var(--bg-secondary); cursor: crosshair;
+      width: 100%; height: 5.25rem; display: block; margin-top: 0.625rem;
+      border: 1px solid var(--hairline); border-radius: var(--radius-md);
+      background: var(--sunken); cursor: crosshair;
     }
 
+    /* ---- The measurement ---------------------------------------------------
+       The arc is the result. The reading sits at the apex of the trajectory it
+       was derived from, so the number is a position rather than a decoration. */
+    .reading {
+      position: relative; margin-top: 0.75rem;
+      border: 1px solid var(--hairline); border-radius: var(--radius-lg);
+      background: var(--sunken); padding: 0.75rem 1rem 1rem;
+      overflow: hidden;
+    }
+    .trajectory { width: 100%; height: 8.5rem; display: block; }
+    .trajectory .arc {
+      fill: none; stroke: var(--ink); stroke-width: 2;
+      stroke-linecap: round; stroke-dasharray: var(--arc-len, 1000);
+      stroke-dashoffset: var(--arc-len, 1000);
+    }
+    .trajectory .base { stroke: var(--line-strong); stroke-width: 1; }
+    .trajectory .tick { stroke: var(--line-strong); stroke-width: 1; }
+    .trajectory .dim  { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+    .trajectory .marker-dot { fill: var(--ink); }
+    .trajectory .lbl {
+      font-family: var(--font-data); font-size: 0.6875rem; fill: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+    .measure-badge {
+      position: absolute; left: 50%; top: 0.375rem; transform: translateX(-50%);
+      background: var(--readout); color: var(--readout-ink);
+      border-radius: 999px; padding: 0.25rem 0.875rem;
+      font-family: var(--font-data); font-size: 1.5rem; font-weight: 700;
+      font-variant-numeric: tabular-nums; line-height: 1.2;
+      white-space: nowrap;
+    }
+    .measure-badge .unit {
+      font-size: 0.8125rem; font-weight: 600; opacity: 0.75; margin-left: 0.125rem;
+    }
+    .measure-badge.dim { opacity: 0.45; }
+    .readout-line {
+      margin-top: 0.5rem; text-align: center;
+      font-family: var(--font-data); font-size: 0.8125rem;
+      font-variant-numeric: tabular-nums; color: var(--muted);
+    }
+    .readout-line strong { color: var(--ink); font-weight: 600; }
+
+    .calc-bar {
+      position: sticky; bottom: 0; z-index: 2;
+      padding: 0.75rem 0 calc(0.75rem + env(safe-area-inset-bottom));
+      margin-top: 0.5rem;
+      /* No backdrop: a gradient to --surface turns into a black slab in dark mode,
+         and the bar is stuck at body level so it never overlaps card content. */
+    }
     .calc-btn {
-      width: 100%; padding: 13px;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 15px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-      background: var(--text-primary); color: var(--bg-primary);
-      border: none; border-radius: var(--radius-md); cursor: pointer; transition: opacity 0.12s;
+      width: 100%; min-height: 3.25rem; padding: 0.875rem;
+      font-family: var(--font-ui);
+      font-size: 1.0625rem; font-weight: 600;
+      background: var(--ink); color: var(--surface);
+      border: none; border-radius: var(--radius-md); cursor: pointer;
+      transition: opacity 0.12s ease;
     }
-    .calc-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-    .calc-btn:hover:not(:disabled) { opacity: 0.82; }
+    .calc-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .calc-btn:hover:not(:disabled) { opacity: 0.85; }
 
-    .results-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
-    .result-card { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 12px 14px; }
-    .r-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-secondary); font-weight: 600; margin-bottom: 4px; }
-    .r-val { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 700; line-height: 1; color: var(--text-primary); }
-    .r-unit { font-size: 13px; color: var(--text-secondary); font-weight: 400; }
-    .result-card.highlight { background: var(--text-primary); }
-    .result-card.highlight .r-label { color: rgba(255,255,255,0.55); }
-    .result-card.highlight .r-val { color: #fff; }
-    .result-card.highlight .r-unit { color: rgba(255,255,255,0.65); }
-
-    .formula-row {
-      font-size: 12px; color: var(--text-tertiary);
-      font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.03em;
-      margin-top: 10px; text-align: center;
+    .chart-caption {
+      font-family: var(--font-data); font-size: 0.75rem; color: var(--muted);
+      margin-top: 0.375rem;
     }
 
-    .video-filename { font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .video-filename {
+      font-family: var(--font-data); font-size: 0.75rem; color: var(--muted);
+      margin-bottom: 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+    }
 
     .hidden { display: none !important; }
+
+    @media (min-width: 40rem) {
+      .header h1 { font-size: 1.875rem; }
+      .measure-badge { font-size: 1.75rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .trajectory .arc { stroke-dashoffset: 0; }
+      * { transition-duration: 0.01ms !important; }
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .trajectory.animate .arc { animation: trace 0.42s ease-out forwards; }
+      @keyframes trace {
+        from { stroke-dashoffset: var(--arc-len, 1000); }
+        to   { stroke-dashoffset: 0; }
+      }
+    }
   </style>
 </head>
 <body>
   <div class="app">
     <div class="header">
-      <div class="header-left">
-        <h1>Jump Height</h1>
-        <span class="header-sub">Flight Time Calculator</span>
-      </div>
+      <h1>Jump Height</h1>
       <button class="new-video-btn hidden" id="newVideoBtn">
-        <i class="ti ti-refresh"></i> New Video
+        <i class="ti ti-refresh" aria-hidden="true"></i> New Video
       </button>
     </div>
 
-    <div class="upload-zone" id="uploadZone">
-      <i class="ti ti-video"></i>
+    <button class="upload-zone" id="uploadZone" type="button">
+      <i class="ti ti-video" aria-hidden="true"></i>
       <p><strong>Drop video here</strong> or click to browse</p>
-      <p style="margin-top:6px; font-size:12px;">MP4 · MOV · WebM &nbsp;·&nbsp; frame rate detected automatically</p>
+      <p class="upload-hint">MP4 · MOV · WebM &nbsp;·&nbsp; frame rate detected automatically</p>
       <input type="file" id="fileInput" accept="video/*" style="display:none">
-    </div>
+    </button>
 
     <div id="mainUI" class="hidden">
 
       <div class="section">
-        <div class="section-label">Frame Rate</div>
         <div class="fps-row" id="fpsRow">
-          <button class="fps-btn" data-fps="30">30 fps</button>
-          <button class="fps-btn" data-fps="60">60 fps</button>
-          <button class="fps-btn" data-fps="90">90 fps</button>
-          <button class="fps-btn" data-fps="120">120 fps</button>
-          <button class="fps-btn" data-fps="240">240 fps</button>
+          <button class="fps-btn" data-fps="30">30</button>
+          <button class="fps-btn" data-fps="60">60</button>
+          <button class="fps-btn" data-fps="90">90</button>
+          <button class="fps-btn" data-fps="120">120</button>
+          <button class="fps-btn" data-fps="240">240</button>
         </div>
-        <div class="fps-note" id="fpsNote">Detecting frame rate…</div>
+        <div class="fps-note" id="fpsNote" role="status" aria-live="polite">Detecting frame rate…</div>
       </div>
 
       <div class="section">
-        <div class="section-label">Video &amp; Frame Selection</div>
         <div class="video-filename" id="videoFilename"></div>
         <video id="videoEl" muted playsinline></video>
 
         <div class="playback-row">
-          <button class="play-btn" id="playBtn" title="Play / Pause">
-            <i class="ti ti-player-play" id="playIcon"></i>
+          <button class="play-btn" id="playBtn" aria-label="Play">
+            <i class="ti ti-player-play" id="playIcon" aria-hidden="true"></i>
           </button>
-          <button class="step-btn" id="prevFrame" title="Previous frame"><i class="ti ti-chevron-left"></i></button>
-          <button class="step-btn" id="nextFrame" title="Next frame"><i class="ti ti-chevron-right"></i></button>
+          <button class="step-btn" id="prevFrame" aria-label="Previous frame"><i class="ti ti-chevron-left" aria-hidden="true"></i></button>
+          <button class="step-btn" id="nextFrame" aria-label="Next frame"><i class="ti ti-chevron-right" aria-hidden="true"></i></button>
           <span class="frame-counter" id="frameCounter">Frame 0 / 0</span>
         </div>
 
-        <div style="margin-bottom:4px;">
-          <input type="range" id="frameSlider" min="0" max="1000" value="0" step="1">
-        </div>
-        <div class="frame-markers"><span>0</span><span id="frameLabelEnd">—</span></div>
+        <input type="range" id="frameSlider" min="0" max="1000" value="0" step="1" aria-label="Video position in frames">
+        <div class="frame-markers" aria-hidden="true"><span>0</span><span id="frameLabelEnd">—</span></div>
 
         <div class="mark-controls">
-          <button class="mark-btn" id="markTakeoff"><i class="ti ti-arrow-up"></i> Mark Takeoff</button>
-          <button class="mark-btn" id="markLanding"><i class="ti ti-arrow-down"></i> Mark Landing</button>
+          <button class="mark-btn" id="markTakeoff"><i class="ti ti-arrow-up" aria-hidden="true"></i> Mark Takeoff</button>
+          <button class="mark-btn" id="markLanding"><i class="ti ti-arrow-down" aria-hidden="true"></i> Mark Landing</button>
         </div>
 
         <div class="markers-display">
@@ -303,27 +428,33 @@
           <div class="marker-chip"><div class="chip-label">Frames in air</div><div class="chip-val unset" id="framesInAir">—</div></div>
         </div>
 
-        <canvas class="height-chart hidden" id="heightChart"></canvas>
-        <button class="auto-btn" id="autoDetectBtn" disabled><i class="ti ti-wand"></i> Detect takeoff &amp; landing</button>
-        <div class="auto-status" id="autoStatus"></div>
+        <canvas class="height-chart hidden" id="heightChart" aria-label="Foot contact signal over time"></canvas>
+        <div class="chart-caption hidden" id="chartCaption">Foot contact, measured from the pixels</div>
+        <button class="auto-btn" id="autoDetectBtn" disabled><i class="ti ti-wand" aria-hidden="true"></i> Detect takeoff &amp; landing</button>
+        <div class="auto-status" id="autoStatus" role="status" aria-live="polite"></div>
       </div>
 
-      <div class="section">
-        <div class="section-label">Results</div>
+      <div class="reading hidden" id="reading">
+        <svg class="trajectory" id="trajectory" viewBox="0 0 320 136" preserveAspectRatio="none" role="img" aria-labelledby="trajTitle">
+          <title id="trajTitle">Jump trajectory from takeoff to landing</title>
+          <line class="base" id="trajBase" x1="0" y1="120" x2="320" y2="120"></line>
+          <path class="arc" id="trajArc" d=""></path>
+          <line class="dim" id="trajApex" x1="160" y1="120" x2="160" y2="30"></line>
+          <circle class="marker-dot" id="trajDotA" cx="16" cy="120" r="3"></circle>
+          <circle class="marker-dot" id="trajDotB" cx="304" cy="120" r="3"></circle>
+          <text class="lbl" id="trajLblA" x="16" y="132" text-anchor="start">takeoff</text>
+          <text class="lbl" id="trajLblB" x="304" y="132" text-anchor="end">landing</text>
+        </svg>
+        <div class="measure-badge" id="measureBadge">—<span class="unit">cm</span></div>
+        <div class="readout-line" id="readoutLine"></div>
+      </div>
+
+      <div class="calc-bar">
         <button class="calc-btn" id="calcBtn" disabled>Calculate Jump Height</button>
-        <div id="resultsArea" class="hidden">
-          <div class="results-grid">
-            <div class="result-card"><div class="r-label">Flight time</div><div class="r-val" id="resTime">—</div><div class="r-unit">seconds</div></div>
-            <div class="result-card highlight"><div class="r-label">Height</div><div class="r-val" id="resCm">—</div><div class="r-unit">centimeters</div></div>
-            <div class="result-card"><div class="r-label">Height</div><div class="r-val" id="resIn">—</div><div class="r-unit">inches</div></div>
-          </div>
-          <div class="formula-row" id="formulaRow"></div>
-        </div>
       </div>
 
     </div>
   </div>
-
   <script>
   'use strict';
 
@@ -346,7 +477,18 @@
   const landingVal   = document.getElementById('landingVal');
   const framesInAir  = document.getElementById('framesInAir');
   const calcBtn      = document.getElementById('calcBtn');
-  const resultsArea  = document.getElementById('resultsArea');
+  const reading      = document.getElementById('reading');
+  const trajectory   = document.getElementById('trajectory');
+  const trajArc      = document.getElementById('trajArc');
+  const trajBase     = document.getElementById('trajBase');
+  const trajApex     = document.getElementById('trajApex');
+  const trajDotA     = document.getElementById('trajDotA');
+  const trajDotB     = document.getElementById('trajDotB');
+  const trajLblA     = document.getElementById('trajLblA');
+  const trajLblB     = document.getElementById('trajLblB');
+  const measureBadge = document.getElementById('measureBadge');
+  const readoutLine  = document.getElementById('readoutLine');
+  const chartCaption = document.getElementById('chartCaption');
   const videoFilename = document.getElementById('videoFilename');
   const fpsRow       = document.getElementById('fpsRow');
   const fpsNote      = document.getElementById('fpsNote');
@@ -509,7 +651,7 @@
     }
     markTakeoffBtn.classList.toggle('set', takeoffFrame != null);
     markLandingBtn.classList.toggle('set', landingFrame != null);
-    resultsArea.classList.add('hidden');   // any marker change invalidates shown results
+    hideReading();                         // any marker change invalidates shown results
     syncButtons();
   }
 
@@ -518,6 +660,7 @@
     analysis = null;
     analysisToken++;
     hideChart();
+    hideReading();
     autoStatus.textContent = '';
     autoStatus.className = 'auto-status';
     renderMarkers();
@@ -996,21 +1139,69 @@
   });
 
   /* =========================================================================
-     CALCULATION
+     CALCULATION AND THE READING
      ========================================================================= */
   calcBtn.addEventListener('click', () => {
     if (takeoffFrame == null || landingFrame == null) return;
     const frames = landingFrame - takeoffFrame;
     const t = frames / fps;
     const halfT = t / 2;
-    const d = 0.5 * 9.81 * halfT * halfT;
-    document.getElementById('resTime').textContent = t.toFixed(3);
-    document.getElementById('resCm').textContent = (d * 100).toFixed(1);
-    document.getElementById('resIn').textContent = (d * 39.3701).toFixed(1);
-    document.getElementById('formulaRow').textContent =
-      `d = ½ × 9.81 × (${halfT.toFixed(3)})² = ${d.toFixed(4)} m   ·   ${frames} frames @ ${fpsLabel(fps)} fps`;
-    resultsArea.classList.remove('hidden');
+    const d = 0.5 * 9.81 * halfT * halfT;   // metres; matches the force-plate JH-2 definition
+    showReading(t, frames, d);
   });
+
+  function hideReading() { reading.classList.add('hidden'); }
+
+  function showReading(t, frames, metres) {
+    const cm = metres * 100;
+    const inches = metres * 39.3701;
+    measureBadge.innerHTML = `${cm.toFixed(1)}<span class="unit">cm</span>`;
+    measureBadge.setAttribute('aria-label', `${cm.toFixed(1)} centimetres`);
+    readoutLine.innerHTML =
+      `<strong>${t.toFixed(3)} s</strong> flight · ${frames} frames @ ${fpsLabel(fps)} fps · ${inches.toFixed(1)} in`;
+    drawTrajectory();
+    reading.classList.remove('hidden');
+    // one orchestrated trace of the arc when a result lands
+    trajectory.classList.remove('animate');
+    void trajectory.offsetWidth;
+    trajectory.classList.add('animate');
+  }
+
+  // Draws the flight path itself: a parabola from the marked takeoff frame to the
+  // landing frame, with the apex dimensioned. Height scales with the measured value,
+  // so the diagram is a readout and not decoration.
+  function drawTrajectory() {
+    const VW = 320, VH = 136;
+    const baseY = 120, topY = 30;
+    const x0 = 16, x1 = VW - 16;
+    const flight = (landingFrame - takeoffFrame) / fps;
+    // normalise against a 1.2 s flight so a bigger jump visibly draws taller
+    const f = Math.max(0.12, Math.min(1, flight / 1.2));
+    const apexY = baseY - (baseY - topY) * f;
+    const apexX = (x0 + x1) / 2;
+
+    // quadratic through (x0,baseY), (apexX,apexY), (x1,baseY) -> control point
+    const ctrlY = 2 * apexY - baseY;
+    trajArc.setAttribute('d', `M ${x0} ${baseY} Q ${apexX} ${ctrlY} ${x1} ${baseY}`);
+
+    trajBase.setAttribute('x1', 0); trajBase.setAttribute('x2', VW);
+    trajBase.setAttribute('y1', baseY); trajBase.setAttribute('y2', baseY);
+
+    trajApex.setAttribute('x1', apexX); trajApex.setAttribute('x2', apexX);
+    trajApex.setAttribute('y1', baseY); trajApex.setAttribute('y2', apexY);
+
+    [trajDotA, trajDotB].forEach((d2, i) => {
+      d2.setAttribute('cx', i === 0 ? x0 : x1);
+      d2.setAttribute('cy', baseY);
+    });
+    // anchored inward: the viewBox is stretched, so centred text overflows the card
+    trajLblA.setAttribute('x', x0 - 4); trajLblA.setAttribute('y', baseY + 13);
+    trajLblB.setAttribute('x', x1 + 4); trajLblB.setAttribute('y', baseY + 13);
+
+    // total path length, so the trace animation can run edge to edge
+    const len = 2 * Math.hypot(apexX - x0, apexY - baseY) * 1.06;
+    trajectory.style.setProperty('--arc-len', len.toFixed(1));
+  }
 
   /* =========================================================================
      MOTION ANALYSIS — locate the takeoff and landing frames from the pixels
@@ -1359,7 +1550,10 @@
   /* =========================================================================
      FOOT-HEIGHT CHART
      ========================================================================= */
-  function hideChart() { heightChart.classList.add('hidden'); }
+  function hideChart() {
+    heightChart.classList.add('hidden');
+    chartCaption.classList.add('hidden');
+  }
 
   function chartColors() {
     const cs = getComputedStyle(document.documentElement);
@@ -1377,6 +1571,7 @@
     const finite = analysis.values.filter(isFinite);
     if (!finite.length) { hideChart(); return; }
     heightChart.classList.remove('hidden');
+    chartCaption.classList.remove('hidden');
     const dpr = window.devicePixelRatio || 1;
     const cssW = heightChart.clientWidth || 600;
     const cssH = 84;

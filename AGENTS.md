@@ -2,7 +2,7 @@
 
 ## What this is
 
-A single-file, zero-dependency browser app. All HTML, CSS, and JS are inline in `jump_height_calculator.html` (~1445 lines). There is no `package.json`, build step, bundler, test runner, linter, or CI config. Keep it that way: no external JS libraries, no npm. Splitting into ES modules would break README Option A, because a `file://` page cannot load modules.
+A single-file, zero-dependency browser app. All HTML, CSS, and JS are inline in `jump_height_calculator.html`. There is no `package.json`, build step, bundler, test runner, linter, or CI config. Keep it that way: no external JS libraries, no npm. Splitting into ES modules would break README Option A, because a `file://` page cannot load modules.
 
 ## Running and verifying
 
@@ -75,6 +75,21 @@ These drift easily because they exist in more than one place:
 - **Frame-rate presets** — the `.fps-row` buttons in the HTML, the `PRESETS` array used for snapping (which also carries off-list rates such as 23.976, 25, 59.94), and `README.md`.
 - **Gravity (9.81 m/s²)** — the `calcBtn` handler, the README "Physics reference" table, and the README "How it works" formula.
 - **The accuracy table in `README.md`** is derived from the sensitivity of `d = ½·g·(t/2)²` to one frame of error; if the flight-time formula ever changes, recompute it.
+
+## Design system
+
+The tokens in `:root` are the whole visual language. Keep new work inside them rather than adding colours or sizes, and keep the measured contrast above the thresholds recorded beside each token.
+
+- **`--muted` is the value that was wrong before.** It was `#a0a09b`, 2.41:1 on the card, carrying the analysis progress text. It is now `#55555e` (light) / `#a3a3ad` (dark), 7.38:1 / 6.79:1. Do not lower it to make something look softer; that is exactly the mistake the earlier palette made.
+- **Two line tokens, and the difference is load-bearing.** `--line-strong` draws anything that identifies a control and must reach 3:1 (WCAG 1.4.11). `--hairline` is decorative and is allowed to be faint. Using `--hairline` for a button border silently undoes the fix.
+- **`--readout` is hi-vis and is never text or a border.** `#d8e836` as a line on white is 1.35:1. It is only ever a fill carrying `--readout-ink`, which is pinned in both appearances. The metaphor is a hi-vis vest or a race bib, and that constraint is what keeps it legible.
+- **Type is in `rem`, against a 16px root.** All 26 size declarations were `px` before, so the browser's text-size setting changed the spacing and left the text alone. Never reintroduce `px` for `font-size`.
+- **Three type roles.** `--font-display` (Barlow Condensed) appears once, on the `h1`. `--font-ui` (Barlow) for labels and controls. `--font-data` (a system monospace stack with `tabular-nums`) for every measured number, so digits line up.
+- **44px minimum targets.** `--tap` is 44px and every control uses it. `input[type=range]` is a special case: its *element box* is the hit region, so it is 44px tall with only the track styled, rather than a 4px-tall input.
+- **The reading is an arc, not a card grid.** `drawTrajectory` draws a parabola from the marked takeoff to the marked landing, with the apex dimensioned, and the height scales with the measured value so the diagram is a readout rather than decoration. The old `.results-grid` of three number-over-label cards was the exact generic pattern the design review flagged.
+- **`prefers-reduced-motion` and `prefers-contrast: more` both have answers.** The arc trace is gated behind `no-preference`, and Increase Contrast promotes `--muted` and `--line-strong`.
+
+Accessibility floor to verify after any UI change: `aria-live="polite"` on `#fpsNote` and `#autoStatus` (they change during a long operation and must be announced), `aria-label` on the three icon-only buttons, and no `font-size` in `px`.
 
 ## Deployment
 
