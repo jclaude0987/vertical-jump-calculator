@@ -20,6 +20,8 @@
       --border-light: rgba(0,0,0,0.1);
       --border-mid: rgba(0,0,0,0.18);
       --border-strong: rgba(0,0,0,0.28);
+      --warn-text: #b45309;
+      --ok-text: #15803d;
       --radius-md: 8px;
       --radius-lg: 12px;
     }
@@ -35,6 +37,8 @@
         --border-light: rgba(255,255,255,0.08);
         --border-mid: rgba(255,255,255,0.14);
         --border-strong: rgba(255,255,255,0.22);
+        --warn-text: #fbbf24;
+        --ok-text: #4ade80;
       }
     }
 
@@ -111,21 +115,30 @@
 
     video { width: 100%; border-radius: var(--radius-md); display: block; margin-bottom: 10px; background: #000; max-height: 360px; object-fit: contain; }
 
-    .fps-row { display: flex; gap: 8px; margin-bottom: 1rem; }
+    .fps-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
     .fps-btn {
-      flex: 1; padding: 8px 0; font-size: 13px; font-weight: 600;
+      flex: 1; min-width: 60px; padding: 8px 0; font-size: 13px; font-weight: 600;
       font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.05em;
       background: var(--bg-secondary); border: 0.5px solid var(--border-mid);
       border-radius: var(--radius-md); cursor: pointer; color: var(--text-secondary); transition: all 0.12s;
     }
-    .fps-btn:hover { background: var(--bg-primary); color: var(--text-primary); }
+    .fps-btn:hover:not(:disabled) { background: var(--bg-primary); color: var(--text-primary); }
     .fps-btn.active { background: var(--text-primary); color: var(--bg-primary); border-color: var(--text-primary); }
+    .fps-btn:disabled { cursor: default; }
+
+    .fps-note {
+      font-size: 12px; line-height: 1.45; color: var(--text-tertiary);
+      min-height: 17px; margin-bottom: 2px;
+    }
+    .fps-note.warn { color: var(--warn-text); }
+    .fps-note.ok { color: var(--ok-text); }
 
     input[type=range] {
       width: 100%; height: 4px; cursor: pointer;
       accent-color: var(--text-primary);
       margin-bottom: 0;
     }
+    input[type=range]:disabled { opacity: 0.4; cursor: default; }
 
     .frame-markers { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
 
@@ -148,7 +161,8 @@
       border: 0.5px solid var(--border-light); cursor: pointer;
       background: transparent; transition: all 0.12s; flex-shrink: 0;
     }
-    .step-btn:hover { border-color: var(--border-mid); background: var(--bg-secondary); }
+    .step-btn:hover:not(:disabled) { border-color: var(--border-mid); background: var(--bg-secondary); }
+    .step-btn:disabled { opacity: 0.35; cursor: default; }
     .step-btn i { font-size: 14px; color: var(--text-primary); }
 
     .mark-controls { display: flex; gap: 8px; margin-bottom: 10px; margin-top: 12px; }
@@ -158,8 +172,9 @@
       border: 0.5px solid var(--border-mid); border-radius: var(--radius-md);
       cursor: pointer; background: var(--bg-secondary); color: var(--text-secondary); transition: all 0.12s;
     }
-    .mark-btn:hover { background: var(--bg-primary); color: var(--text-primary); }
+    .mark-btn:hover:not(:disabled) { background: var(--bg-primary); color: var(--text-primary); }
     .mark-btn.set { border-color: var(--border-strong); color: var(--text-primary); background: var(--bg-primary); }
+    .mark-btn:disabled { opacity: 0.45; cursor: default; }
     .mark-btn i { font-size: 16px; }
 
     .markers-display { display: flex; gap: 8px; }
@@ -172,6 +187,27 @@
     .chip-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); font-weight: 600; }
     .chip-val { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; color: var(--text-primary); }
     .chip-val.unset { color: var(--text-tertiary); font-weight: 400; }
+
+    .auto-btn {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;
+      margin-top: 12px; padding: 10px 12px; font-size: 13px; font-weight: 500;
+      font-family: 'Barlow', sans-serif;
+      border: 0.5px solid var(--border-mid); border-radius: var(--radius-md);
+      background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer; transition: all 0.12s;
+    }
+    .auto-btn:hover:not(:disabled) { background: var(--bg-primary); color: var(--text-primary); border-color: var(--border-strong); }
+    .auto-btn:disabled { opacity: 0.45; cursor: default; }
+    .auto-btn i { font-size: 16px; }
+
+    .auto-status { font-size: 12px; line-height: 1.45; color: var(--text-tertiary); margin-top: 6px; min-height: 17px; }
+    .auto-status.warn { color: var(--warn-text); }
+    .auto-status.ok { color: var(--ok-text); }
+
+    .height-chart {
+      width: 100%; height: 84px; display: block; margin-top: 10px;
+      border: 0.5px solid var(--border-light); border-radius: var(--radius-md);
+      background: var(--bg-secondary); cursor: crosshair;
+    }
 
     .calc-btn {
       width: 100%; padding: 13px;
@@ -219,7 +255,7 @@
     <div class="upload-zone" id="uploadZone">
       <i class="ti ti-video"></i>
       <p><strong>Drop video here</strong> or click to browse</p>
-      <p style="margin-top:6px; font-size:12px;">MP4 · MOV · WebM &nbsp;·&nbsp; 30 / 60 / 90 / 120 / 240 fps</p>
+      <p style="margin-top:6px; font-size:12px;">MP4 · MOV · WebM &nbsp;·&nbsp; frame rate detected automatically</p>
       <input type="file" id="fileInput" accept="video/*" style="display:none">
     </div>
 
@@ -227,13 +263,14 @@
 
       <div class="section">
         <div class="section-label">Frame Rate</div>
-        <div class="fps-row">
+        <div class="fps-row" id="fpsRow">
           <button class="fps-btn" data-fps="30">30 fps</button>
           <button class="fps-btn" data-fps="60">60 fps</button>
           <button class="fps-btn" data-fps="90">90 fps</button>
-          <button class="fps-btn active" data-fps="120">120 fps</button>
+          <button class="fps-btn" data-fps="120">120 fps</button>
           <button class="fps-btn" data-fps="240">240 fps</button>
         </div>
+        <div class="fps-note" id="fpsNote">Detecting frame rate…</div>
       </div>
 
       <div class="section">
@@ -265,6 +302,10 @@
           <div class="marker-chip"><div class="chip-label">Landing</div><div class="chip-val unset" id="landingVal">—</div></div>
           <div class="marker-chip"><div class="chip-label">Frames in air</div><div class="chip-val unset" id="framesInAir">—</div></div>
         </div>
+
+        <canvas class="height-chart hidden" id="heightChart"></canvas>
+        <button class="auto-btn" id="autoDetectBtn" disabled><i class="ti ti-wand"></i> Detect takeoff &amp; landing</button>
+        <div class="auto-status" id="autoStatus"></div>
       </div>
 
       <div class="section">
@@ -284,186 +325,1130 @@
   </div>
 
   <script>
-    const uploadZone = document.getElementById('uploadZone');
-    const fileInput = document.getElementById('fileInput');
-    const mainUI = document.getElementById('mainUI');
-    const newVideoBtn = document.getElementById('newVideoBtn');
-    const videoEl = document.getElementById('videoEl');
-    const playBtn = document.getElementById('playBtn');
-    const playIcon = document.getElementById('playIcon');
-    const frameSlider = document.getElementById('frameSlider');
-    const frameCounter = document.getElementById('frameCounter');
-    const frameLabelEnd = document.getElementById('frameLabelEnd');
-    const markTakeoffBtn = document.getElementById('markTakeoff');
-    const markLandingBtn = document.getElementById('markLanding');
-    const takeoffVal = document.getElementById('takeoffVal');
-    const landingVal = document.getElementById('landingVal');
-    const framesInAir = document.getElementById('framesInAir');
-    const calcBtn = document.getElementById('calcBtn');
-    const resultsArea = document.getElementById('resultsArea');
-    const videoFilename = document.getElementById('videoFilename');
+  'use strict';
 
-    let fps = 120;
-    let totalFrames = 0;
-    let takeoffFrame = null;
-    let landingFrame = null;
-    let isPlaying = false;
-    let rafId = null;
-    let sliderDragging = false;
-    let objectURL = null;
+  /* =========================================================================
+     DOM REFERENCES
+     ========================================================================= */
+  const uploadZone   = document.getElementById('uploadZone');
+  const fileInput    = document.getElementById('fileInput');
+  const mainUI       = document.getElementById('mainUI');
+  const newVideoBtn  = document.getElementById('newVideoBtn');
+  const videoEl      = document.getElementById('videoEl');
+  const playBtn      = document.getElementById('playBtn');
+  const playIcon     = document.getElementById('playIcon');
+  const frameSlider  = document.getElementById('frameSlider');
+  const frameCounter = document.getElementById('frameCounter');
+  const frameLabelEnd = document.getElementById('frameLabelEnd');
+  const markTakeoffBtn = document.getElementById('markTakeoff');
+  const markLandingBtn = document.getElementById('markLanding');
+  const takeoffVal   = document.getElementById('takeoffVal');
+  const landingVal   = document.getElementById('landingVal');
+  const framesInAir  = document.getElementById('framesInAir');
+  const calcBtn      = document.getElementById('calcBtn');
+  const resultsArea  = document.getElementById('resultsArea');
+  const videoFilename = document.getElementById('videoFilename');
+  const fpsRow       = document.getElementById('fpsRow');
+  const fpsNote      = document.getElementById('fpsNote');
+  const autoDetectBtn = document.getElementById('autoDetectBtn');
+  const autoStatus   = document.getElementById('autoStatus');
+  const heightChart  = document.getElementById('heightChart');
 
-    uploadZone.addEventListener('click', () => fileInput.click());
-    uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.style.borderColor = '#888'; });
-    uploadZone.addEventListener('dragleave', () => { uploadZone.style.borderColor = ''; });
-    uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.style.borderColor = ''; if (e.dataTransfer.files[0]) loadVideo(e.dataTransfer.files[0]); });
-    fileInput.addEventListener('change', e => { if (e.target.files[0]) loadVideo(e.target.files[0]); });
+  /* =========================================================================
+     STATE
+     ========================================================================= */
+  let fps = null;                 // resolved frame rate, null until known
+  let fpsSource = null;           // 'container' | 'playback' | 'manual'
+  let detectionDone = false;      // has an attempt to resolve fps finished?
+  let totalFrames = 0;
+  // Markers are stored as media TIME (fps-independent) and derived into frame
+  // indices, so changing the frame rate re-quantises them instead of destroying them.
+  let takeoffTime = null;
+  let landingTime = null;
+  let takeoffFrame = null;
+  let landingFrame = null;
+  let isPlaying = false;
+  let rafId = null;
+  let sliderDragging = false;
+  let objectURL = null;
+  let busy = false;               // analysis in flight
+  let analysis = null;            // last successful motion analysis
+  let loadToken = 0;              // invalidates async work when a new video loads
+  let analysisToken = 0;          // invalidates an in-flight analysis
+  let autoRan = false;            // auto-detection fires once per video
 
-    newVideoBtn.addEventListener('click', () => {
-      if (isPlaying) stopPlayback();
-      if (objectURL) { URL.revokeObjectURL(objectURL); objectURL = null; }
-      videoEl.src = '';
-      fileInput.value = '';
-      mainUI.classList.add('hidden');
-      uploadZone.classList.remove('hidden');
-      newVideoBtn.classList.add('hidden');
-      videoFilename.textContent = '';
-      resetMarkers();
+  /* =========================================================================
+     TIMELINE  (frame index <-> media time)
+     ========================================================================= */
+  function clampFrame(f) { return Math.max(0, Math.min(f, Math.max(0, totalFrames - 1))); }
+  function currentFrame() { return fps ? Math.round(videoEl.currentTime * fps) : 0; }
+  function frameToTime(f) { return fps ? f / fps : 0; }
+
+  function recomputeTimeline() {
+    if (fps == null || !isFinite(videoEl.duration) || videoEl.duration <= 0) return;
+    // NOTE: intentionally duration * fps rather than the container sample count.
+    // Real iPhone files carry PTS offsets and discontinuities, so the sample count
+    // does not map onto the 0..duration timeline this slider indexes.
+    totalFrames = Math.max(1, Math.floor(videoEl.duration * fps));
+    frameSlider.max = String(totalFrames - 1);
+    frameLabelEnd.textContent = String(totalFrames - 1);
+    const cur = Math.min(parseInt(frameSlider.value, 10) || 0, totalFrames - 1);
+    frameSlider.value = String(cur);
+    seekToFrame(cur);
+    renderMarkers();
+  }
+
+  function seekToFrame(f) {
+    if (fps == null) return;
+    f = clampFrame(f);
+    videoEl.currentTime = frameToTime(f);
+    frameSlider.value = String(f);
+    updateCounter();
+    drawChart();
+  }
+
+  function updateCounter() {
+    if (fps == null || !totalFrames) { frameCounter.textContent = 'Frame — / —'; return; }
+    const f = Math.min(currentFrame(), totalFrames - 1);
+    frameCounter.textContent = `Frame ${f} / ${totalFrames - 1}`;
+  }
+
+  /* =========================================================================
+     FRAME RATE SELECTION
+     ========================================================================= */
+  const PRESETS = [23.976, 24, 25, 29.97, 30, 50, 59.94, 60, 90, 100, 119.88, 120, 200, 240];
+
+  function fpsLabel(v) { return (Math.round(v * 1000) / 1000).toString(); }
+
+  function snapToPreset(v) {
+    let best = null, bestErr = Infinity;
+    for (const p of PRESETS) {
+      const err = Math.abs(p - v) / p;
+      if (err < bestErr) { bestErr = err; best = p; }
+    }
+    return bestErr <= 0.02 ? best : null;
+  }
+
+  function updateFpsUi() {
+    fpsRow.querySelectorAll('.fps-btn.dynamic').forEach(b => b.remove());
+    let matched = null;
+    fpsRow.querySelectorAll('.fps-btn').forEach(b => {
+      const v = parseFloat(b.dataset.fps);
+      const on = fps != null && Math.abs(v - fps) < 0.05;
+      b.classList.toggle('active', on);
+      if (on) matched = b;
     });
+    if (fps != null && !matched) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'fps-btn dynamic active';
+      b.dataset.fps = String(fps);
+      b.textContent = fpsLabel(fps) + ' fps';
+      fpsRow.appendChild(b);
+    }
+    fpsNote.className = 'fps-note';
+    if (fps == null && !detectionDone) {
+      fpsNote.textContent = 'Detecting frame rate…';
+    } else if (fps == null) {
+      fpsNote.textContent = "Couldn't detect the frame rate — select it manually.";
+      fpsNote.classList.add('warn');
+    } else if (fpsSource === 'container') {
+      fpsNote.textContent = `Detected ${fpsLabel(fps)} fps from the video file. Change it if that's wrong.`;
+      fpsNote.classList.add('ok');
+    } else if (fpsSource === 'playback') {
+      fpsNote.textContent = `Measured ${fpsLabel(fps)} fps by playing the video. Change it if that's wrong.`;
+    } else {
+      fpsNote.textContent = '';
+    }
+  }
 
-    function loadVideo(file) {
-      if (objectURL) URL.revokeObjectURL(objectURL);
-      objectURL = URL.createObjectURL(file);
-      videoEl.src = objectURL;
-      videoEl.load();
-      videoFilename.textContent = file.name;
-      videoEl.addEventListener('loadedmetadata', () => {
-        totalFrames = Math.floor(videoEl.duration * fps);
-        frameSlider.max = totalFrames - 1;
-        frameSlider.value = 0;
-        frameLabelEnd.textContent = totalFrames - 1;
-        updateCounter();
-        mainUI.classList.remove('hidden');
-        uploadZone.classList.add('hidden');
-        newVideoBtn.classList.remove('hidden');
-        resetMarkers();
-      }, { once: true });
+  function setFps(value, source) {
+    fps = value;
+    fpsSource = source;
+    updateFpsUi();
+    if (videoEl.src && isFinite(videoEl.duration)) recomputeTimeline();
+    syncButtons();
+    maybeAutoDetect();
+  }
+
+  // Delegated so the dynamically-added detected-rate button works too.
+  fpsRow.addEventListener('click', e => {
+    const btn = e.target.closest('.fps-btn');
+    if (!btn || btn.disabled) return;
+    const value = parseFloat(btn.dataset.fps);
+    if (!isFinite(value) || value <= 0) return;
+    setFps(value, 'manual');
+  });
+
+  /* =========================================================================
+     MARKERS
+     ========================================================================= */
+  function setChip(el, value) {
+    if (value == null) { el.textContent = '—'; el.classList.add('unset'); }
+    else { el.textContent = String(value); el.classList.remove('unset'); }
+  }
+
+  function hasValidMarks() {
+    return takeoffFrame != null && landingFrame != null && (landingFrame - takeoffFrame) > 0;
+  }
+
+  function renderMarkers() {
+    takeoffFrame = takeoffTime == null || fps == null
+      ? null : clampFrame(Math.round(takeoffTime * fps));
+    landingFrame = landingTime == null || fps == null
+      ? null : clampFrame(Math.round(landingTime * fps));
+    setChip(takeoffVal, takeoffFrame);
+    setChip(landingVal, landingFrame);
+    const diff = (takeoffFrame != null && landingFrame != null) ? landingFrame - takeoffFrame : null;
+    if (diff != null && diff > 0) {
+      framesInAir.textContent = String(diff);
+      framesInAir.classList.remove('unset');
+    } else {
+      framesInAir.textContent = diff != null ? 'err' : '—';
+      framesInAir.classList.add('unset');
+    }
+    markTakeoffBtn.classList.toggle('set', takeoffFrame != null);
+    markLandingBtn.classList.toggle('set', landingFrame != null);
+    resultsArea.classList.add('hidden');   // any marker change invalidates shown results
+    syncButtons();
+  }
+
+  function resetMarkers() {
+    takeoffTime = null; landingTime = null;
+    analysis = null;
+    analysisToken++;
+    hideChart();
+    autoStatus.textContent = '';
+    autoStatus.className = 'auto-status';
+    renderMarkers();
+  }
+
+  function syncButtons() {
+    const ready = fps != null && videoEl.src !== '' && totalFrames > 0;
+    // Playback stays available even before the frame rate is known, so the user can
+    // still watch the clip while deciding; only frame-indexed controls are gated.
+    playBtn.disabled = videoEl.src === '';
+    frameSlider.disabled = !ready;
+    document.getElementById('prevFrame').disabled = !ready;
+    document.getElementById('nextFrame').disabled = !ready;
+    markTakeoffBtn.disabled = !ready;
+    markLandingBtn.disabled = !ready;
+    autoDetectBtn.disabled = !ready || busy;
+    calcBtn.disabled = !ready || !hasValidMarks();
+  }
+
+  /* =========================================================================
+     VIDEO LOADING
+     ========================================================================= */
+  uploadZone.addEventListener('click', () => fileInput.click());
+  uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.style.borderColor = '#888'; });
+  uploadZone.addEventListener('dragleave', () => { uploadZone.style.borderColor = ''; });
+  uploadZone.addEventListener('drop', e => {
+    e.preventDefault(); uploadZone.style.borderColor = '';
+    if (e.dataTransfer.files[0]) loadVideo(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', e => { if (e.target.files[0]) loadVideo(e.target.files[0]); });
+
+  newVideoBtn.addEventListener('click', () => {
+    if (isPlaying) stopPlayback();
+    loadToken++; analysisToken++;
+    if (objectURL) { URL.revokeObjectURL(objectURL); objectURL = null; }
+    videoEl.removeAttribute('src');
+    videoEl.load();
+    fileInput.value = '';
+    mainUI.classList.add('hidden');
+    uploadZone.classList.remove('hidden');
+    newVideoBtn.classList.add('hidden');
+    videoFilename.textContent = '';
+    busy = false; autoRan = false; detectionDone = false;
+    fps = null; fpsSource = null; totalFrames = 0;
+    fpsNote.className = 'fps-note';
+    fpsNote.textContent = 'Detecting frame rate…';
+    updateFpsUi();
+    resetMarkers();
+  });
+
+  async function loadVideo(file) {
+    const token = ++loadToken;
+    analysisToken++;
+    busy = false; autoRan = false; detectionDone = false;
+    analysis = null;
+    if (objectURL) URL.revokeObjectURL(objectURL);
+    objectURL = URL.createObjectURL(file);
+    videoEl.src = objectURL;
+    videoEl.load();
+    videoFilename.textContent = file.name;
+    fps = null; fpsSource = null; totalFrames = 0;
+    updateFpsUi();
+    resetMarkers();
+    syncButtons();
+
+    const ok = await new Promise(resolve => {
+      const done = () => resolve(true);
+      videoEl.addEventListener('loadedmetadata', done, { once: true });
+      videoEl.addEventListener('error', () => resolve(false), { once: true });
+      setTimeout(() => resolve(videoEl.readyState >= 1), 8000);
+    });
+    if (token !== loadToken) return;
+    if (!ok || !isFinite(videoEl.duration)) {
+      fpsNote.className = 'fps-note warn';
+      fpsNote.textContent = 'Could not read this video file.';
+      return;
     }
 
-    document.querySelectorAll('.fps-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.fps-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        fps = parseInt(btn.dataset.fps);
-        if (videoEl.src) {
-          totalFrames = Math.floor(videoEl.duration * fps);
-          frameSlider.max = totalFrames - 1;
-          frameLabelEnd.textContent = totalFrames - 1;
-          const cur = Math.min(parseInt(frameSlider.value), totalFrames - 1);
-          frameSlider.value = cur;
-          seekToFrame(cur);
-          resetMarkers();
+    mainUI.classList.remove('hidden');
+    uploadZone.classList.add('hidden');
+    newVideoBtn.classList.remove('hidden');
+
+    const resolved = await resolveFrameRate(file, token);
+    if (token !== loadToken) return;
+    detectionDone = true;
+    if (resolved) setFps(resolved.fps, resolved.source);
+    else { fps = null; fpsSource = null; updateFpsUi(); syncButtons(); }
+  }
+
+  async function resolveFrameRate(file, token) {
+    try {
+      const info = await probeContainer(file);
+      if (token !== loadToken) return null;
+      if (info && info.fps > 0) {
+        const snapped = snapToPreset(info.fps) || info.fps;
+        console.debug('[fps] container', info.fps, '->', snapped, info);
+        return { fps: snapped, source: 'container' };
+      }
+    } catch (e) { console.debug('[fps] container probe failed', e); }
+
+    try {
+      const measured = await measureFps();
+      if (token !== loadToken) return null;
+      if (measured) {
+        console.debug('[fps] measured', measured);
+        return { fps: measured, source: 'playback' };
+      }
+    } catch (e) { console.debug('[fps] measurement failed', e); }
+    return null;
+  }
+
+  /* =========================================================================
+     FPS DETECTION (BEGIN) — pure functions, no DOM access
+     ========================================================================= */
+
+  function u8str(u8, off, len) {
+    let s = '';
+    for (let i = 0; i < len; i++) s += String.fromCharCode(u8[off + i]);
+    return s;
+  }
+  function dvstr(dv, off, len) { return u8str(new Uint8Array(dv.buffer, dv.byteOffset + off, len), 0, len); }
+
+  async function readBoxHeaderAt(file, off) {
+    const u8 = new Uint8Array(await file.slice(off, off + 16).arrayBuffer());
+    if (u8.length < 8) return null;
+    const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+    let size = dv.getUint32(0);
+    const type = u8str(u8, 4, 4);
+    let headerSize = 8;
+    if (size === 1) {
+      if (u8.length < 16) return null;
+      size = dv.getUint32(8) * 4294967296 + dv.getUint32(12);
+      headerSize = 16;
+    } else if (size === 0) {
+      size = file.size - off;
+    }
+    return { size, type, headerSize };
+  }
+
+  // Walk top-level boxes by header only. Boxes such as mdat are skipped by offset,
+  // so a moov at the end of the file costs a handful of small reads, not a full scan.
+  async function findTopLevelBox(file, type) {
+    let off = 0, guard = 0;
+    while (off + 8 <= file.size && guard++ < 128) {
+      const h = await readBoxHeaderAt(file, off);
+      if (!h || h.size < h.headerSize) return null;
+      if (h.type === type) {
+        return { start: off, headerSize: h.headerSize, end: Math.min(off + h.size, file.size) };
+      }
+      off += h.size;
+    }
+    return null;
+  }
+
+  function readBoxes(dv, start, end) {
+    const boxes = [];
+    let off = start;
+    while (off + 8 <= end) {
+      let size = dv.getUint32(off);
+      const type = dvstr(dv, off + 4, 4);
+      let headerSize = 8;
+      if (size === 1) {
+        if (off + 16 > end) break;
+        size = dv.getUint32(off + 8) * 4294967296 + dv.getUint32(off + 12);
+        headerSize = 16;
+      } else if (size === 0) {
+        size = end - off;
+      }
+      if (size < headerSize) break;
+      if (off + size > end) size = end - off;   // tolerate a truncated tail box
+      boxes.push({ type, start: off, headerSize, end: off + size });
+      off += size;
+    }
+    return boxes;
+  }
+
+  function childBox(dv, box, type) {
+    return readBoxes(dv, box.start + box.headerSize, box.end).find(b => b.type === type) || null;
+  }
+
+  function readMdhdTimescale(dv, mdhd) {
+    const b = mdhd.start + mdhd.headerSize;
+    const version = dv.getUint8(b);
+    return version === 1 ? dv.getUint32(b + 20) : dv.getUint32(b + 12);
+  }
+
+  // Returns the total media duration covered by the video samples plus their count.
+  // Summing stts is what makes this robust: these files routinely contain PTS
+  // offsets and discontinuities that corrupt a duration/frameCount estimate.
+  function readStts(dv, stts) {
+    const b = stts.start + stts.headerSize;
+    const entries = dv.getUint32(b + 4);
+    const list = [];
+    let samples = 0, totalDuration = 0;
+    for (let i = 0; i < entries; i++) {
+      const p = b + 8 + i * 8;
+      if (p + 8 > stts.end) break;
+      const count = dv.getUint32(p);
+      const delta = dv.getUint32(p + 4);
+      list.push({ count, delta });
+      samples += count;
+      totalDuration += count * delta;
+    }
+    return { entries, samples, totalDuration, list };
+  }
+
+  async function parseMp4(file) {
+    const moov = await findTopLevelBox(file, 'moov');
+    if (!moov) return null;
+    const dv = new DataView(await file.slice(moov.start + moov.headerSize, moov.end).arrayBuffer());
+    for (const trak of readBoxes(dv, 0, dv.byteLength).filter(b => b.type === 'trak')) {
+      const mdia = childBox(dv, trak, 'mdia'); if (!mdia) continue;
+      const hdlr = childBox(dv, mdia, 'hdlr');
+      if (!hdlr) continue;
+      // hdlr layout: version/flags (4) + pre_defined (4) + handler_type (4)
+      if (dvstr(dv, hdlr.start + hdlr.headerSize + 8, 4) !== 'vide') continue;
+      const mdhd = childBox(dv, mdia, 'mdhd'); if (!mdhd) continue;
+      const minf = childBox(dv, mdia, 'minf'); if (!minf) continue;
+      const stbl = childBox(dv, minf, 'stbl'); if (!stbl) continue;
+      const stts = childBox(dv, stbl, 'stts'); if (!stts) continue;
+      const timescale = readMdhdTimescale(dv, mdhd);
+      if (!timescale) continue;
+      const { samples, totalDuration, list } = readStts(dv, stts);
+      if (!samples || !totalDuration || !list.length) continue;
+      let sampleCount = samples;
+      const stsz = childBox(dv, stbl, 'stsz');
+      if (stsz) {
+        const c = dv.getUint32(stsz.start + stsz.headerSize + 8);
+        if (c) sampleCount = c;
+      }
+      // Use the interval the samples actually use. Summing the whole stts folds in rare
+      // long gaps from paused or edited recordings; on the real iPhone clips in this
+      // project that dragged the result to 29.22 fps when the true interval is 30.
+      // Counts must be aggregated BY DELTA VALUE, not per stts entry: these files split
+      // a uniform 30fps stream across ~25 entries, so no single entry dominates.
+      // Only fall back to a duration-weighted average when no one interval dominates,
+      // which means a genuinely variable-frame-rate file with no single correct answer.
+      const byDelta = new Map();
+      for (const e of list) byDelta.set(e.delta, (byDelta.get(e.delta) || 0) + e.count);
+      let bestDelta = 0, bestCount = 0;
+      for (const [delta, count] of byDelta) if (count > bestCount) { bestCount = count; bestDelta = delta; }
+      const vfr = (bestCount / samples) < 0.9;
+      return {
+        fps: vfr ? (samples * timescale / totalDuration) : (timescale / bestDelta),
+        container: 'mp4',
+        timescale,
+        frameCount: sampleCount,
+        vfr
+      };
+    }
+    return null;
+  }
+
+  function ebmlID(dv, off) {
+    const first = dv.getUint8(off);
+    if (!first) return null;
+    let len = 1;
+    for (let m = 0x80; m; m >>= 1, len++) if (first & m) break;
+    if (len > 8 || off + len > dv.byteLength) return null;
+    let id = 0;
+    for (let i = 0; i < len; i++) id = id * 256 + dv.getUint8(off + i);
+    return { id, len };
+  }
+
+  function ebmlSize(dv, off) {
+    const first = dv.getUint8(off);
+    if (!first) return null;
+    let len = 1;
+    for (let m = 0x80; m; m >>= 1, len++) if (first & m) break;
+    if (len > 8 || off + len > dv.byteLength) return null;
+    let value = first & (0xFF >> len);
+    for (let i = 1; i < len; i++) value = value * 256 + dv.getUint8(off + i);
+    return { value, len };
+  }
+
+  function ebmlFirstChild(dv, start, end, wantId) {
+    let off = start;
+    while (off < end) {
+      const id = ebmlID(dv, off); if (!id) return null;
+      const sz = ebmlSize(dv, off + id.len); if (!sz) return null;
+      const bodyStart = off + id.len + sz.len;
+      const bodyEnd = Math.min(bodyStart + sz.value, end);
+      if (id.id === wantId) return { start: bodyStart, end: bodyEnd };
+      if (bodyEnd <= off) return null;
+      off = bodyEnd;
+    }
+    return null;
+  }
+
+  async function parseWebm(file) {
+    const limit = Math.min(file.size, 2 * 1024 * 1024);
+    const u8 = new Uint8Array(await file.slice(0, limit).arrayBuffer());
+    const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+    const segment = ebmlFirstChild(dv, 0, dv.byteLength, 0x18538067); if (!segment) return null;
+    const tracks = ebmlFirstChild(dv, segment.start, segment.end, 0x1654AE6B); if (!tracks) return null;
+    let off = tracks.start;
+    while (off < tracks.end) {
+      const id = ebmlID(dv, off); if (!id) break;
+      const sz = ebmlSize(dv, off + id.len); if (!sz) break;
+      const bodyStart = off + id.len + sz.len;
+      const bodyEnd = Math.min(bodyStart + sz.value, tracks.end);
+      if (id.id === 0xAE) {
+        const trackType = ebmlFirstChild(dv, bodyStart, bodyEnd, 0x83);
+        const isVideo = trackType && (trackType.end - trackType.start) >= 1 && dv.getUint8(trackType.start) === 1;
+        if (isVideo) {
+          const video = ebmlFirstChild(dv, bodyStart, bodyEnd, 0xE0);
+          if (video) {
+            const dd = ebmlFirstChild(dv, video.start, video.end, 0x23E383);
+            if (dd) {
+              let ns = 0;
+              for (let i = dd.start; i < dd.end; i++) ns = ns * 256 + dv.getUint8(i);
+              if (ns > 0) return { fps: 1e9 / ns, container: 'webm', frameCount: null, vfr: false };
+            }
+          }
         }
-      });
+      }
+      if (bodyEnd <= off) break;
+      off = bodyEnd;
+    }
+    return null;
+  }
+
+  async function probeContainer(file) {
+    try {
+      const head = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+      if (head.length >= 12 && u8str(head, 4, 4) === 'ftyp') return await parseMp4(file);
+      if (head.length >= 4 && head[0] === 0x1a && head[1] === 0x45 && head[2] === 0xdf && head[3] === 0xa3) {
+        return await parseWebm(file);
+      }
+      // QuickTime/ISO files without an ftyp first (moov/mdat/wide/free/skip/pnot)
+      if (head.length >= 8) {
+        const t = u8str(head, 4, 4);
+        if (t === 'moov' || t === 'mdat' || t === 'wide' || t === 'free' || t === 'skip' || t === 'pnot') {
+          return await parseMp4(file);
+        }
+      }
+    } catch (e) { console.debug('[fps] probe error', e); }
+    return null;
+  }
+  /* ===== FPS DETECTION (END) ===== */
+
+  /* =========================================================================
+     FPS MEASUREMENT (fallback: play the video and time the presented frames)
+     ========================================================================= */
+  function frameReady(timeout = 30) {
+    return new Promise(resolve => {
+      let done = false;
+      const finish = () => { if (!done) { done = true; resolve(); } };
+      if (typeof videoEl.requestVideoFrameCallback === 'function') {
+        try { videoEl.requestVideoFrameCallback(finish); } catch (e) { /* ignore */ }
+      } else {
+        requestAnimationFrame(() => requestAnimationFrame(finish));
+      }
+      setTimeout(finish, timeout);
+    });
+  }
+
+  function estimateRefreshRate() {
+    return new Promise(resolve => {
+      let n = 0, first = 0, last = 0;
+      const step = t => {
+        if (n === 0) first = t;
+        last = t; n++;
+        if (n >= 12) {
+          const dt = last - first;
+          resolve(dt > 0 ? (n - 1) / (dt / 1000) : 0);
+          return;
+        }
+        requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+  }
+
+  // The presented frame rate is capped by the display refresh rate, so a 240fps
+  // clip on a 60Hz screen measures ~60. That is a confident wrong answer, not a
+  // failure, so results at the ceiling are rejected rather than trusted.
+  async function measureFps() {
+    if (typeof videoEl.requestVideoFrameCallback !== 'function') return null;
+    const refresh = await estimateRefreshRate();
+    if (!(refresh >= 24)) return null;               // implausible -> cannot judge the ceiling
+    const savedTime = videoEl.currentTime;
+    const savedMuted = videoEl.muted;
+    const restore = () => {
+      try { videoEl.pause(); } catch (e) { /* ignore */ }
+      videoEl.muted = savedMuted;
+      try { videoEl.currentTime = savedTime; } catch (e) { /* ignore */ }
+    };
+    videoEl.muted = true;
+    const intervals = [];
+    let prev = null;
+    try {
+      await videoEl.play();
+    } catch (e) { videoEl.muted = savedMuted; return null; }
+
+    await new Promise(resolve => {
+      let settled = false;
+      const done = () => { if (!settled) { settled = true; clearTimeout(timer); resolve(); } };
+      const timer = setTimeout(done, 3000);
+      const tick = (now, meta) => {
+        if (prev && meta.mediaTime > prev.mediaTime) {
+          const frames = Math.max(1, meta.presentedFrames - prev.presentedFrames);
+          const interval = (meta.mediaTime - prev.mediaTime) / frames;
+          if (interval > 0.0005 && interval < 0.2) intervals.push(interval);
+          if (intervals.length >= 45) { done(); return; }
+        }
+        prev = meta;
+        if (videoEl.ended) { done(); return; }
+        try { videoEl.requestVideoFrameCallback(tick); } catch (e) { done(); }
+      };
+      try { videoEl.requestVideoFrameCallback(tick); } catch (e) { done(); }
     });
 
-    function currentFrame() { return Math.round(videoEl.currentTime * fps); }
+    restore();
+    if (intervals.length < 8) return null;
+    intervals.sort((a, b) => a - b);
+    const median = intervals[intervals.length >> 1];
+    const measured = 1 / median;
+    if (!isFinite(measured) || measured <= 0) return null;
+    if (measured >= refresh * 0.95) return null;     // at the display ceiling -> ambiguous
+    return snapToPreset(measured) || measured;
+  }
 
-    function seekToFrame(f) {
-      f = Math.max(0, Math.min(f, totalFrames - 1));
-      videoEl.currentTime = f / fps;
-      frameSlider.value = f;
-      updateCounter();
-    }
+  /* =========================================================================
+     PLAYBACK
+     ========================================================================= */
+  playBtn.addEventListener('click', togglePlay);
 
-    function updateCounter() {
-      frameCounter.textContent = `Frame ${Math.round(videoEl.currentTime * fps)} / ${totalFrames - 1}`;
-    }
+  function togglePlay() { isPlaying ? stopPlayback() : startPlayback(); }
 
-    frameSlider.addEventListener('input', () => { sliderDragging = true; seekToFrame(parseInt(frameSlider.value)); });
-    frameSlider.addEventListener('change', () => { sliderDragging = false; });
+  function startPlayback() {
+    videoEl.play().then(() => { isPlaying = true; }).catch(() => {});
+    playIcon.className = 'ti ti-player-pause';
+    rafId = requestAnimationFrame(rafLoop);
+  }
 
-    playBtn.addEventListener('click', togglePlay);
+  function stopPlayback() {
+    videoEl.pause(); isPlaying = false;
+    playIcon.className = 'ti ti-player-play';
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = null;
+  }
 
-    function togglePlay() { isPlaying ? stopPlayback() : startPlayback(); }
-
-    function startPlayback() {
-      videoEl.play(); isPlaying = true;
-      playIcon.className = 'ti ti-player-pause';
-      rafId = requestAnimationFrame(rafLoop);
-    }
-
-    function stopPlayback() {
-      videoEl.pause(); isPlaying = false;
-      playIcon.className = 'ti ti-player-play';
-      cancelAnimationFrame(rafId);
-    }
-
-    function rafLoop() {
-      if (!sliderDragging) { frameSlider.value = currentFrame(); updateCounter(); }
+  function rafLoop() {
+    if (isPlaying) {
+      if (!sliderDragging && fps != null) {
+        frameSlider.value = String(Math.min(currentFrame(), Math.max(0, totalFrames - 1)));
+        updateCounter();
+        drawChart();
+      }
       if (videoEl.ended) { stopPlayback(); return; }
       rafId = requestAnimationFrame(rafLoop);
     }
+  }
 
-    videoEl.addEventListener('ended', stopPlayback);
+  videoEl.addEventListener('ended', stopPlayback);
 
-    document.getElementById('prevFrame').addEventListener('click', () => { if (isPlaying) stopPlayback(); seekToFrame(currentFrame() - 1); });
-    document.getElementById('nextFrame').addEventListener('click', () => { if (isPlaying) stopPlayback(); seekToFrame(currentFrame() + 1); });
+  frameSlider.addEventListener('input', () => { sliderDragging = true; seekToFrame(parseInt(frameSlider.value, 10)); });
+  frameSlider.addEventListener('change', () => { sliderDragging = false; });
+  document.getElementById('prevFrame').addEventListener('click', () => { if (isPlaying) stopPlayback(); seekToFrame(currentFrame() - 1); });
+  document.getElementById('nextFrame').addEventListener('click', () => { if (isPlaying) stopPlayback(); seekToFrame(currentFrame() + 1); });
 
-    markTakeoffBtn.addEventListener('click', () => {
-      takeoffFrame = currentFrame();
-      takeoffVal.textContent = takeoffFrame;
-      takeoffVal.classList.remove('unset');
-      markTakeoffBtn.classList.add('set');
-      updateFramesInAir();
+  /* =========================================================================
+     MARKING
+     ========================================================================= */
+  markTakeoffBtn.addEventListener('click', () => {
+    if (fps == null) return;
+    takeoffTime = frameToTime(currentFrame());
+    renderMarkers();
+  });
+
+  markLandingBtn.addEventListener('click', () => {
+    if (fps == null) return;
+    landingTime = frameToTime(currentFrame());
+    renderMarkers();
+  });
+
+  /* =========================================================================
+     CALCULATION
+     ========================================================================= */
+  calcBtn.addEventListener('click', () => {
+    if (takeoffFrame == null || landingFrame == null) return;
+    const frames = landingFrame - takeoffFrame;
+    const t = frames / fps;
+    const halfT = t / 2;
+    const d = 0.5 * 9.81 * halfT * halfT;
+    document.getElementById('resTime').textContent = t.toFixed(3);
+    document.getElementById('resCm').textContent = (d * 100).toFixed(1);
+    document.getElementById('resIn').textContent = (d * 39.3701).toFixed(1);
+    document.getElementById('formulaRow').textContent =
+      `d = ½ × 9.81 × (${halfT.toFixed(3)})² = ${d.toFixed(4)} m   ·   ${frames} frames @ ${fpsLabel(fps)} fps`;
+    resultsArea.classList.remove('hidden');
+  });
+
+  /* =========================================================================
+     MOTION ANALYSIS — locate the takeoff and landing frames from the pixels
+     ========================================================================= */
+
+  const ANALYSIS_MAX_W = 300;   // analysis resolution; smaller = faster, less precise
+  const DIFF_T = 22;            // luma difference that counts as "not the reference"
+  const COARSE_MAX = 120;       // cap on sampled frames (every sample costs a seek)
+  const PLATE_SAMPLES = 16;     // frames used for the per-pixel median reference
+  const CONTACT_BAND = 0.30;    // contact band height, as a share of the subject's span
+
+  class Cancelled extends Error {}
+
+  function median(values) {
+    if (!values.length) return NaN;
+    const a = values.slice().sort((x, y) => x - y);
+    const mid = a.length >> 1;
+    return a.length % 2 ? a[mid] : (a[mid - 1] + a[mid]) / 2;
+  }
+
+  function madSigma(devs) {
+    const m = median(devs);
+    return 1.4826 * median(devs.map(d => Math.abs(d - m)));
+  }
+
+  function seekTo(t) {
+    return new Promise((resolve, reject) => {
+      const target = Math.max(0, Math.min(t, Math.max(0, videoEl.duration - 1e-3)));
+      if (Math.abs(videoEl.currentTime - target) < 1e-5 && videoEl.readyState >= 2) { resolve(); return; }
+      const cleanup = () => {
+        videoEl.removeEventListener('seeked', onSeeked);
+        videoEl.removeEventListener('error', onError);
+      };
+      const onSeeked = () => { cleanup(); resolve(); };
+      const onError = () => { cleanup(); reject(new Error('seek failed')); };
+      videoEl.addEventListener('seeked', onSeeked, { once: true });
+      videoEl.addEventListener('error', onError, { once: true });
+      try { videoEl.currentTime = target; } catch (e) { cleanup(); reject(e); }
     });
+  }
 
-    markLandingBtn.addEventListener('click', () => {
-      landingFrame = currentFrame();
-      landingVal.textContent = landingFrame;
-      landingVal.classList.remove('unset');
-      markLandingBtn.classList.add('set');
-      updateFramesInAir();
-    });
+  // The measured quantity is GROUND CONTACT, not height. For each sampled frame we
+  // measure how much of a narrow band just above the foot level differs from the
+  // reference. Standing, the band matches the reference and reads ~0; once the feet
+  // leave, the band shows floor where the reference had legs and reads high.
+  //
+  // It is deliberately not "the lowest row that differs". When the reference contains
+  // the standing athlete — the normal case, since they stand for most of the clip —
+  // that measure stays pinned to the ground through the whole flight, because the
+  // vacated silhouette below the airborne feet differs from the reference too.
+  async function analyzeMotion(token, report) {
+    const duration = videoEl.duration;
+    const cw = videoEl.videoWidth, ch = videoEl.videoHeight;
+    if (!isFinite(duration) || duration <= 0 || !cw || !ch) return null;
 
-    function updateFramesInAir() {
-      if (takeoffFrame !== null && landingFrame !== null) {
-        const diff = landingFrame - takeoffFrame;
-        if (diff > 0) {
-          framesInAir.textContent = diff;
-          framesInAir.classList.remove('unset');
-          calcBtn.disabled = false;
-          resultsArea.classList.add('hidden');
-        } else {
-          framesInAir.textContent = 'err';
-          framesInAir.classList.add('unset');
-          calcBtn.disabled = true;
+    const scale = Math.min(1, ANALYSIS_MAX_W / cw);
+    const W = Math.max(16, Math.round(cw * scale));
+    const H = Math.max(16, Math.round(ch * scale));
+    const N = W * H;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const check = () => { if (token !== analysisToken) throw new Cancelled(); };
+
+    async function lumaAt(t) {
+      await seekTo(t);
+      await frameReady();
+      check();
+      ctx.drawImage(videoEl, 0, 0, W, H);
+      const px = ctx.getImageData(0, 0, W, H).data;
+      const g = new Uint8Array(N);
+      for (let i = 0, j = 0; i < N; i++, j += 4) {
+        g[i] = (px[j] * 77 + px[j + 1] * 150 + px[j + 2] * 29) >> 8;
+      }
+      return g;
+    }
+
+    // --- 1. sample the clip once; reuse those frames for the reference (no extra seeking)
+    const coarseN = Math.max(40, Math.min(COARSE_MAX, Math.round(duration * 24)));
+    const times = [];
+    const frames = [];
+    for (let i = 0; i < coarseN; i++) {
+      const t = duration * (i + 0.5) / coarseN;
+      frames.push(await lumaAt(t));
+      times.push(t);
+      report(0.70 * (i + 1) / coarseN, `Scanning video… ${Math.round(100 * (i + 1) / coarseN)}%`);
+    }
+    check();
+
+    // --- 2. reference plate, and where the scene ever differs from it
+    const plateStep = Math.max(1, Math.floor(frames.length / PLATE_SAMPLES));
+    const plateFrames = [];
+    for (let i = 0; i < frames.length; i += plateStep) plateFrames.push(frames[i]);
+    const plate = new Uint8Array(N);
+    const scratch = new Uint8Array(plateFrames.length);
+    for (let p = 0; p < N; p++) {
+      for (let k = 0; k < plateFrames.length; k++) scratch[k] = plateFrames[k][p];
+      plate[p] = median(Array.from(scratch));
+    }
+    plateFrames.length = 0;
+
+    const colMass = new Int32Array(W);
+    const rowMass = new Int32Array(H);
+    const seen = new Uint8Array(N);
+    for (const g of frames) {
+      for (let y = 0; y < H; y++) {
+        const row = y * W;
+        for (let x = 0; x < W; x++) {
+          if (!seen[row + x] && Math.abs(g[row + x] - plate[row + x]) > DIFF_T) {
+            seen[row + x] = 1;
+            colMass[x]++;
+            rowMass[y]++;
+          }
         }
       }
     }
 
-    function resetMarkers() {
-      takeoffFrame = null; landingFrame = null;
-      takeoffVal.textContent = '—'; takeoffVal.classList.add('unset');
-      landingVal.textContent = '—'; landingVal.classList.add('unset');
-      framesInAir.textContent = '—'; framesInAir.classList.add('unset');
-      markTakeoffBtn.classList.remove('set');
-      markLandingBtn.classList.remove('set');
-      calcBtn.disabled = true;
-      resultsArea.classList.add('hidden');
+    // --- 3. contact band = the subject's columns x the rows just above the foot level.
+    // The lowest row the scene ever differs at is the foot level: whenever the athlete is
+    // airborne, the vacated silhouette reaches down to it.
+    const rowMin = Math.max(2, Math.round(H * 0.01));
+    let ry0 = -1, ry1 = -1;
+    for (let y = 0; y < H; y++) {
+      if (rowMass[y] >= rowMin) { if (ry0 < 0) ry0 = y; ry1 = y; }
+    }
+    const colMin = Math.max(2, Math.round(H * 0.02));
+    const cols = [];
+    for (let x = 0; x < W; x++) if (colMass[x] >= colMin) cols.push(x);
+    if (ry0 < 0 || (ry1 - ry0) < 3 || cols.length < 3) {
+      frames.length = 0;
+      return { confident: false, reason: 'could not locate the athlete in the frame', times: [], values: [] };
+    }
+    const cx0 = cols[0], cx1 = cols[cols.length - 1];
+    const spanW = cx1 - cx0 + 1;
+    const bandH = Math.max(3, Math.round((ry1 - ry0 + 1) * CONTACT_BAND));
+    const bandTop = Math.max(0, ry1 - bandH + 1);
+    const bandArea = spanW * (ry1 - bandTop + 1);
+
+    report(0.72, 'Locating the jump…');
+
+    function contactOf(g) {
+      let changed = 0;
+      for (let y = bandTop; y <= ry1; y++) {
+        const row = y * W;
+        for (let x = cx0; x <= cx1; x++) if (Math.abs(g[row + x] - plate[row + x]) > DIFF_T) changed++;
+      }
+      return changed / bandArea;
     }
 
-    calcBtn.addEventListener('click', () => {
-      const frames = landingFrame - takeoffFrame;
-      const t = frames / fps;
-      const halfT = t / 2;
-      const d = 0.5 * 9.81 * halfT * halfT;
-      document.getElementById('resTime').textContent = t.toFixed(3);
-      document.getElementById('resCm').textContent = (d * 100).toFixed(1);
-      document.getElementById('resIn').textContent = (d * 39.3701).toFixed(1);
-      document.getElementById('formulaRow').textContent =
-        `d = ½ × 9.81 × (${halfT.toFixed(3)})² = ${d.toFixed(4)} m   ·   ${frames} frames @ ${fps} fps`;
-      resultsArea.classList.remove('hidden');
+    const raw = frames.map(contactOf);
+    frames.length = 0;
+    check();
+
+    // --- 4. change points on the contact signal
+    const clean = smooth(raw);
+    const base = { times, values: clean, bandTop, bandBottom: ry1, cx0, cx1 };
+    const finite = clean.filter(isFinite);
+    if (finite.length < 12) {
+      return { ...base, confident: false, reason: 'not enough of the subject visible' };
+    }
+
+    const sorted = finite.slice().sort((a, b) => a - b);
+    // most of the clip is spent on the ground, so a low percentile is the quiet level
+    const baseline = sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.25))];
+    const peak = sorted[sorted.length - 1];
+    const excursion = peak - baseline;
+    // Noise is estimated from the grounded half only. The threshold has to sit just
+    // above that noise floor rather than at a share of the peak: contact starts mattering
+    // the moment the feet move at all, and a proportional threshold reports takeoff
+    // several frames late and landing several frames early.
+    const groundedish = finite.filter(v => v <= baseline + excursion * 0.5);
+    const sigma = Math.max(1e-4, madSigma(groundedish.map(v => v - baseline)));
+    if (!(excursion > 0.008)) {
+      return { ...base, confident: false, reason: 'no clear jump in the footage', baseline, peak, sigma, excursion };
+    }
+    const enter = baseline + Math.max(0.35 * excursion, 12 * sigma);
+    // Purely noise-anchored: "have the feet left the ground at all", which in band terms
+    // is a 1-2px shift of the legs. The small absolute floor covers codec noise.
+    const exit = baseline + Math.max(5 * sigma, 0.02);
+
+    const runs = [];
+    let cur = null;
+    for (let i = 0; i < clean.length; i++) {
+      if (clean[i] > enter) {
+        if (!cur) cur = { i0: i, i1: i };
+        else cur.i1 = i;
+      } else if (cur) { runs.push(cur); cur = null; }
+    }
+    if (cur) runs.push(cur);
+    if (!runs.length) {
+      return { ...base, confident: false, reason: 'no clear jump in the footage', baseline, peak, sigma, excursion };
+    }
+    runs.sort((a, b) => (b.i1 - b.i0) - (a.i1 - a.i0));
+    const main = runs[0];
+    const secondary = runs.slice(1).filter(r => (r.i1 - r.i0) >= 0.3 * (main.i1 - main.i0)).length;
+
+    let ti = main.i0, li = main.i1;
+    for (let i = main.i0; i >= 0; i--) { if (clean[i] <= exit) { ti = i; break; } }
+    for (let i = main.i1; i < clean.length; i++) { if (clean[i] <= exit) { li = i; break; } }
+    let takeoffTime = times[ti];
+    let landingTime = times[li];
+
+    // --- 5. refine both transitions at the full frame rate, on the frame grid
+    const coarseDt = duration / coarseN;
+    const view = { ctx, W, H, plate, bandTop, bandBottom: ry1, cx0, cx1, bandArea };
+    report(0.75, 'Refining to the exact frame…');
+    const r1 = await refineContact(takeoffTime, -1, coarseDt * 1.5, exit, view, token);
+    if (r1 != null) takeoffTime = r1;
+    report(0.9, 'Refining to the exact frame…');
+    const r2 = await refineContact(landingTime, +1, coarseDt * 1.5, exit, view, token);
+    if (r2 != null) landingTime = r2;
+    check();
+
+    // --- 6. confidence
+    const reasons = [];
+    if (!(excursion >= Math.max(0.02, 8 * sigma))) reasons.push('the subject barely moves');
+    if (secondary > 0) reasons.push('more than one movement detected');
+    const flight = landingTime - takeoffTime;
+    if (!(flight >= 0.12 && flight <= 1.5)) reasons.push('implausible flight time');
+    const restingFrac = clean.filter(v => v <= exit).length / clean.length;
+    if (restingFrac < 0.3) reasons.push('no clear resting phase on the ground');
+    if (spanW > W * 0.8) reasons.push('too much of the frame is moving');
+    const grounded = clean.filter(v => v <= exit);
+    const meanGrounded = grounded.length ? grounded.reduce((a, b) => a + b, 0) / grounded.length : 1;
+    if (meanGrounded > 0.04) reasons.push('the background is not stable');
+
+    return {
+      ...base,
+      baseline, peak, sigma, excursion, enter, exit,
+      takeoffTime, landingTime,
+      confident: reasons.length === 0,
+      reason: reasons.join(', ')
+    };
+  }
+
+  function smooth(values) {
+    const out = new Array(values.length);
+    for (let i = 0; i < values.length; i++) {
+      if (!isFinite(values[i])) { out[i] = NaN; continue; }
+      const win = [];
+      for (let k = -1; k <= 1; k++) {
+        const v = values[i + k];
+        if (isFinite(v)) win.push(v);
+      }
+      out[i] = median(win);
+    }
+    return out;
+  }
+
+  // Step one frame at a time across the window and return the last (direction -1) or
+  // first (direction +1) frame that is back down at the grounded level. Sampling on the
+  // frame grid (f / fps) matters: off-grid times make the browser round to whichever
+  // frame it likes, which showed up as a systematic one-frame error.
+  async function refineContact(centre, direction, halfWindow, exit, view, token) {
+    if (fps == null) return null;
+    const { ctx, W, H, plate, bandTop, bandBottom, cx0, cx1, bandArea } = view;
+    const first = Math.max(0, Math.ceil((centre - halfWindow) * fps));
+    const last = Math.min(Math.round((videoEl.duration - 1e-3) * fps), Math.floor((centre + halfWindow) * fps));
+    let best = null;
+    for (let f = first; f <= last; f++) {
+      if (token !== analysisToken) throw new Cancelled();
+      const t = f / fps;
+      await seekTo(t);
+      await frameReady();
+      ctx.drawImage(videoEl, 0, 0, W, H);
+      const px = ctx.getImageData(0, 0, W, H).data;
+      let changed = 0;
+      for (let y = bandTop; y <= bandBottom; y++) {
+        const row = y * W;
+        for (let x = cx0; x <= cx1; x++) {
+          const i = (row + x) * 4;
+          const luma = (px[i] * 77 + px[i + 1] * 150 + px[i + 2] * 29) >> 8;
+          if (Math.abs(luma - plate[row + x]) > DIFF_T) changed++;
+        }
+      }
+      if (changed / bandArea <= exit) {
+        if (direction < 0) best = t;
+        else if (best == null) best = t;
+      }
+    }
+    return best;
+  }
+
+  /* =========================================================================
+     AUTO-DETECTION FLOW
+     ========================================================================= */
+  function maybeAutoDetect() {
+    if (autoRan) return;
+    if (fps == null || !videoEl.src) return;
+    autoRan = true;
+    runAutoDetect();
+  }
+
+  autoDetectBtn.addEventListener('click', () => {
+    if (busy) return;
+    runAutoDetect();
+  });
+
+  async function runAutoDetect() {
+    if (fps == null || !videoEl.src) return;
+    const token = ++analysisToken;
+    if (isPlaying) stopPlayback();
+    busy = true;
+    syncButtons();
+    autoStatus.className = 'auto-status';
+    autoStatus.textContent = 'Analysing motion…';
+    try {
+      const res = await analyzeMotion(token, (frac, msg) => {
+        if (token !== analysisToken) return;
+        autoStatus.textContent = msg;
+      });
+      if (token !== analysisToken) return;
+      if (!res) {
+        autoStatus.className = 'auto-status warn';
+        autoStatus.textContent = 'Could not analyse this video. Mark the frames manually.';
+        return;
+      }
+      analysis = res;
+      drawChart();
+      if (res.confident) {
+        takeoffTime = res.takeoffTime;
+        landingTime = res.landingTime;
+        renderMarkers();
+        seekToFrame(takeoffFrame);
+        autoStatus.className = 'auto-status ok';
+        autoStatus.textContent = `Found takeoff (frame ${takeoffFrame}) and landing (frame ${landingFrame}). ` +
+          `Check the markers against the video and adjust with the arrow buttons if needed.`;
+      } else {
+        autoStatus.className = 'auto-status warn';
+        autoStatus.textContent = `Couldn't confidently detect the jump (${res.reason}). ` +
+          `Mark takeoff and landing manually.`;
+      }
+    } catch (e) {
+      if (e instanceof Cancelled) return;
+      console.debug('[auto] failed', e);
+      if (token === analysisToken) {
+        autoStatus.className = 'auto-status warn';
+        autoStatus.textContent = 'Automatic detection failed on this video. Mark the frames manually.';
+      }
+    } finally {
+      if (token === analysisToken) { busy = false; syncButtons(); }
+    }
+  }
+
+  /* =========================================================================
+     FOOT-HEIGHT CHART
+     ========================================================================= */
+  function hideChart() { heightChart.classList.add('hidden'); }
+
+  function chartColors() {
+    const cs = getComputedStyle(document.documentElement);
+    const get = n => cs.getPropertyValue(n).trim() || '#888';
+    return {
+      line: get('--text-primary'),
+      grid: get('--border-mid'),
+      muted: get('--text-tertiary'),
+      accent: get('--warn-text')
+    };
+  }
+
+  function drawChart() {
+    if (!analysis || !analysis.times || !analysis.values) { hideChart(); return; }
+    const finite = analysis.values.filter(isFinite);
+    if (!finite.length) { hideChart(); return; }
+    heightChart.classList.remove('hidden');
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = heightChart.clientWidth || 600;
+    const cssH = 84;
+    const w = Math.round(cssW * dpr), h = Math.round(cssH * dpr);
+    if (heightChart.width !== w || heightChart.height !== h) { heightChart.width = w; heightChart.height = h; }
+    const g = heightChart.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, cssW, cssH);
+
+    const c = chartColors();
+    const { times, values, exit } = analysis;
+    const baseline = isFinite(analysis.baseline) ? analysis.baseline : 0;
+    const duration = videoEl.duration;
+    const lo = Math.min(baseline, ...finite);
+    const hi = Math.max(...finite);
+    const pad = Math.max(1e-4, (hi - lo) * 0.1);
+    const span = Math.max(1e-6, (hi - lo) + pad * 2);
+    const xOf = t => (t / duration) * cssW;
+    const yOf = v => cssH - 6 - ((v - lo + pad) / span) * (cssH - 12);
+
+    // grounded level + the threshold that separates contact from flight
+    g.strokeStyle = c.grid;
+    g.setLineDash([3, 3]);
+    g.lineWidth = 1;
+    [baseline, exit].forEach(v => {
+      if (!isFinite(v)) return;
+      g.beginPath(); g.moveTo(0, yOf(v)); g.lineTo(cssW, yOf(v)); g.stroke();
     });
+    g.setLineDash([]);
+
+    // takeoff / landing markers
+    g.strokeStyle = c.accent;
+    g.lineWidth = 1.5;
+    [analysis.takeoffTime, analysis.landingTime].forEach(t => {
+      if (t == null) return;
+      g.beginPath(); g.moveTo(xOf(t), 0); g.lineTo(xOf(t), cssH); g.stroke();
+    });
+
+    // signal
+    g.strokeStyle = c.line;
+    g.lineWidth = 1.5;
+    g.beginPath();
+    let started = false;
+    for (let i = 0; i < times.length; i++) {
+      if (!isFinite(values[i])) { started = false; continue; }
+      const x = xOf(times[i]), y = yOf(values[i]);
+      if (!started) { g.moveTo(x, y); started = true; } else g.lineTo(x, y);
+    }
+    g.stroke();
+
+    // playhead
+    if (fps != null) {
+      g.strokeStyle = c.muted;
+      g.lineWidth = 1;
+      const x = xOf(Math.min(videoEl.currentTime, duration));
+      g.beginPath(); g.moveTo(x, 0); g.lineTo(x, cssH); g.stroke();
+    }
+  }
+
+  heightChart.addEventListener('click', e => {
+    if (!analysis || fps == null) return;
+    const rect = heightChart.getBoundingClientRect();
+    const frac = (e.clientX - rect.left) / rect.width;
+    seekToFrame(Math.round(frac * videoEl.duration * fps));
+  });
+
+  /* =========================================================================
+     INIT
+     ========================================================================= */
+  updateFpsUi();
+  syncButtons();
+  window.__appReady = true;
   </script>
 </body>
 </html>
